@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --color-kopkar-50: #f0fdf4;
+  --color-kopkar-100: #dcfce7;
+  --color-kopkar-200: #bbf7d0;
+  --color-kopkar-300: #86efac;
+  --color-kopkar-400: #4ade80;
+  --color-kopkar-500: #22c55e;
+  --color-kopkar-600: #16a34a;
+  --color-kopkar-700: #15803d;
+  --color-kopkar-800: #0b6623;
+  --color-kopkar-900: #054417;
+  --color-kopkar-950: #02240b;
+
+  --color-gold-50: #fffbeb;
+  --color-gold-100: #fef3c7;
+  --color-gold-200: #fde68a;
+  --color-gold-300: #fcd34d;
+  --color-gold-400: #fbbf24;
+  --color-gold-500: #f59e0b;
+  --color-gold-600: #d97706;
+  --color-gold-700: #b45309;
+}
+
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+}
+
+.kopkar-gradient {
+  background: linear-gradient(135deg, #0b6623 0%, #054417 100%);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 12s linear infinite;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  #printable-area {
+    padding: 0 !important;
+  }
+}

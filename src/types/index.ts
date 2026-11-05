@@ -1,4 +1,4 @@
-export type UserRole = 'anggota' | 'petugas_simpin' | 'ketua_koperasi' | 'admin';
+export type UserRole = 'anggota' | 'petugas_simpin' | 'ketua_koperasi';
 
 export interface User {
   id: number;
@@ -54,8 +54,13 @@ export interface Criterion {
 
 export interface SmartEvaluation {
   id: number;
-  loan_application_id: number;
+  loan_application_id?: number | null;
   alternative_code: string;
+  is_manual_simulation?: boolean;
+  candidate_name?: string;
+  candidate_nik?: string;
+  candidate_unit?: string;
+  candidate_plafon?: number;
   val_c1: number;
   val_c2: number;
   val_c3: number;
@@ -70,6 +75,7 @@ export interface SmartEvaluation {
   recommendation: string;
   rank: number;
   calculated_at: string;
+  dynamic_scores?: Record<string, number>;
   loan_application?: LoanApplication;
 }
 

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { DollarSign, Award, Clock, AlertTriangle, XCircle, FileCheck, Send } from 'lucide-react';
 

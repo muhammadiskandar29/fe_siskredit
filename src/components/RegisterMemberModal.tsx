@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { api } from '../services/api';
 import { UserPlus, X, CheckCircle2, AlertCircle, User, Mail, Shield, Building, Lock } from 'lucide-react';
@@ -26,7 +28,7 @@ export const RegisterMemberModal: React.FC<Props> = ({ isOpen, onClose, onSucces
     setMsg(null);
 
     try {
-      const res = await api.post('/rbac/users', {
+      const res = await api.post('/users', {
         name,
         email,
         nik,

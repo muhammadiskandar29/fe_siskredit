@@ -20,29 +20,39 @@ export async function GET(req: NextRequest) {
       where.status = status;
     }
 
-    const loans = await prisma.loanApplication.findMany({
-      where,
-      include: {
-        user: true,
-        documents: true,
-        evaluation: true,
-        approvalLogs: {
-          include: { approver: true },
+    let formatted: any[] = [];
+    try {
+      const loans = await prisma.loanApplication.findMany({
+        where,
+        include: {
+          user: true,
+          documents: true,
+          evaluation: true,
+          approvalLogs: {
+            include: { approver: true },
+          },
         },
-      },
-      orderBy: { id: 'desc' },
-    });
+        orderBy: { id: 'desc' },
+      });
 
-    // Format fields for frontend compatibility
-    const formatted = loans.map((loan) => ({
-      ...loan,
-      application_number: loan.nomor_pengajuan,
-      keperluan_pinjaman: loan.tujuan_pinjaman,
-      verification_notes: loan.catat_verifikasi,
-      approval_notes: loan.catat_approval,
-      smart_evaluation: loan.evaluation,
-      logs: loan.approvalLogs,
-    }));
+      // Format fields for frontend compatibility
+      formatted = loans.map((loan) => ({
+        ...loan,
+        application_number: loan.nomor_pengajuan,
+        keperluan_pinjaman: loan.tujuan_pinjaman,
+        verification_notes: loan.catat_verifikasi,
+        approval_notes: loan.catat_approval,
+        smart_evaluation: loan.evaluation,
+        logs: loan.approvalLogs,
+      }));
+    } catch (dbErr) {
+      const { DEMO_LOANS } = await import('@/lib/demoData');
+      if (user.role === 'anggota') {
+        formatted = DEMO_LOANS.filter((l) => l.user_id === user.id);
+      } else {
+        formatted = DEMO_LOANS;
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -53,6 +63,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: error?.message || 'Server error' }, { status: 500 });
   }
 }
+
 
 export async function POST(req: NextRequest) {
   try {

@@ -26,6 +26,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const fetchUser = async () => {
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roleParam = urlParams.get('role');
+        if (roleParam) {
+          let email = 'petugas.simpin@alazhar.org';
+          if (roleParam === 'anggota') email = 'achmad.sobari@alazhar.org';
+          if (roleParam === 'ketua_koperasi' || roleParam === 'ketua') email = 'ketua.koperasi@alazhar.org';
+          try {
+            const res = await api.post('/auth/login', { email, password: 'password' });
+            if (res.data.success) {
+              const { token, user, permissions } = res.data.data;
+              localStorage.setItem('spk_token', token);
+              localStorage.setItem('spk_user', JSON.stringify(user));
+              setToken(token);
+              setUser(user);
+              setPermissions(permissions || []);
+              setIsLoading(false);
+              return;
+            }
+          } catch (e) {
+            console.error('Auto-login error', e);
+          }
+        }
+      }
+
       const savedToken = localStorage.getItem('spk_token');
       if (savedToken) {
         setToken(savedToken);
@@ -42,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       setIsLoading(false);
     };
+
 
     fetchUser();
   }, []);

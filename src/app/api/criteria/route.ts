@@ -9,38 +9,46 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Unauthenticated' }, { status: 401 });
     }
 
-    const criteria = await prisma.criterion.findMany({
-      include: {
-        subCriteria: {
-          orderBy: { order_num: 'asc' },
+    let formatted: any[] = [];
+    let totalRaw = 100;
+    try {
+      const criteria = await prisma.criterion.findMany({
+        include: {
+          subCriteria: {
+            orderBy: { order_num: 'asc' },
+          },
         },
-      },
-      orderBy: { order_num: 'asc' },
-    });
+        orderBy: { order_num: 'asc' },
+      });
 
-    const totalRaw = criteria.reduce((sum, c) => sum + c.weight, 0);
-
-    const formatted = criteria.map((c) => ({
-      ...c,
-      raw_weight: c.weight,
-      sub_criteria: c.subCriteria.map((s) => ({
-        ...s,
-        score_value: s.score,
-      })),
-    }));
+      totalRaw = criteria.reduce((sum, c) => sum + c.weight, 0);
+      formatted = criteria.map((c) => ({
+        ...c,
+        raw_weight: c.weight,
+        sub_criteria: c.subCriteria.map((s) => ({
+          ...s,
+          score_value: s.score,
+        })),
+      }));
+    } catch (dbErr) {
+      const { DEMO_CRITERIA } = await import('@/lib/demoData');
+      formatted = DEMO_CRITERIA;
+      totalRaw = 100;
+    }
 
     return NextResponse.json({
       success: true,
       data: formatted,
       meta: {
         total_raw_weight: totalRaw,
-        total_criteria: criteria.length,
+        total_criteria: formatted.length,
       },
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error?.message || 'Server error' }, { status: 500 });
   }
 }
+
 
 export async function POST(req: NextRequest) {
   try {

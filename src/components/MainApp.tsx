@@ -19,21 +19,46 @@ import {
 
 const MainLayout: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [currentFrame, setCurrentFrame] = useState<'operasional' | 'lab_riset'>('operasional');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search).get('tab');
+      if (p) return p;
+    }
+    return 'dashboard';
+  });
+  const [currentFrame, setCurrentFrame] = useState<'operasional' | 'lab_riset'>(() => {
+    if (typeof window !== 'undefined') {
+      const v = new URLSearchParams(window.location.search).get('view');
+      if (v === 'smart_lab') return 'lab_riset';
+    }
+    return 'operasional';
+  });
 
-  // Initialize activeTab based on user role
+  // Initialize activeTab based on user role and query params
   React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      const viewParam = urlParams.get('view');
+      if (viewParam === 'smart_lab') setCurrentFrame('lab_riset');
+      if (tabParam) {
+        setActiveTab(tabParam);
+        return;
+      }
+    }
+
     if (user) {
-      if (user.role === 'anggota' && activeTab === 'dashboard') {
+      if (user.role === 'anggota' && (activeTab === 'dashboard' || activeTab === '')) {
         setActiveTab('member_portal');
-      } else if (user.role === 'petugas_simpin' && activeTab === 'dashboard') {
+      } else if (user.role === 'petugas_simpin' && (activeTab === 'dashboard' || activeTab === '')) {
         setActiveTab('admin_engine');
-      } else if (user.role === 'ketua_koperasi' && activeTab === 'dashboard') {
+      } else if (user.role === 'ketua_koperasi' && (activeTab === 'dashboard' || activeTab === '')) {
         setActiveTab('chairman_approval');
       }
     }
   }, [user]);
+
+
 
   if (isLoading) {
     return (

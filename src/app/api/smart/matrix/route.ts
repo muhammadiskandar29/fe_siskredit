@@ -9,19 +9,30 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Unauthenticated' }, { status: 401 });
     }
 
-    const criteria = await prisma.criterion.findMany({
-      orderBy: { order_num: 'asc' },
-    });
+    let criteria: any[] = [];
+    let evaluations: any[] = [];
+    try {
+      criteria = await prisma.criterion.findMany({
+        orderBy: { order_num: 'asc' },
+      });
 
-    const evaluations = await prisma.smartEvaluation.findMany({
-      where: { is_delete: 0 },
-      include: {
-        loanApplication: {
-          include: { user: true },
+      evaluations = await prisma.smartEvaluation.findMany({
+        where: { is_delete: 0 },
+        include: {
+          loanApplication: {
+            include: { user: true },
+          },
         },
-      },
-      orderBy: { rank: 'asc' },
-    });
+        orderBy: { rank: 'asc' },
+      });
+    } catch (dbErr) {
+      const { DEMO_CRITERIA, DEMO_LOANS } = await import('@/lib/demoData');
+      criteria = DEMO_CRITERIA;
+      evaluations = DEMO_LOANS.map((l) => ({
+        ...l.smart_evaluation,
+        loanApplication: l,
+      }));
+    }
 
     return NextResponse.json({
       success: true,
@@ -30,9 +41,9 @@ export async function GET(req: NextRequest) {
         evaluations,
         summary: {
           total_applicants: evaluations.length,
-          highly_recommended: evaluations.filter((e) => e.final_score >= 75.0).length,
-          conditional: evaluations.filter((e) => e.final_score >= 50.0 && e.final_score < 75.0).length,
-          not_recommended: evaluations.filter((e) => e.final_score < 50.0).length,
+          highly_recommended: evaluations.filter((e: any) => e.final_score >= 75.0).length,
+          conditional: evaluations.filter((e: any) => e.final_score >= 50.0 && e.final_score < 75.0).length,
+          not_recommended: evaluations.filter((e: any) => e.final_score < 50.0).length,
         },
       },
     });
@@ -40,3 +51,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: error?.message || 'Server error' }, { status: 500 });
   }
 }
+

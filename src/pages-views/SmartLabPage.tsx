@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
 import { Criterion, SubCriterion, SmartEvaluation, LoanApplication } from '../types';
 import { 
@@ -29,8 +29,20 @@ import {
   Sparkles,
   UserCheck,
   Key,
-  LogOut
+  LogOut,
+  Upload,
+  Download,
+  Search,
+  Filter,
+  FileSpreadsheet,
+  Play,
+  ArrowUpDown,
+  Coins,
+  Wallet,
+  Briefcase,
+  ChevronLeft
 } from 'lucide-react';
+import { generate150CooperativeData, parsePastedData, SimulationCandidateItem } from '../lib/sample150Dataset';
 
 interface Props {
   onBackToOperational: () => void;
@@ -64,20 +76,44 @@ export const SmartLabPage: React.FC<Props> = ({ onBackToOperational }) => {
   const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
   const [fastWeights, setFastWeights] = useState<{ id: number; raw_weight: number }[]>([]);
 
-  // Simulation Alternative Modal State
+  // Simulation Alternative Modal State (With Real Cooperative Data)
   const [isSimModalOpen, setIsSimModalOpen] = useState(false);
   const [editingSim, setEditingSim] = useState<SmartEvaluation | null>(null);
+  const [simInputMode, setSimInputMode] = useState<'real' | 'scores'>('real');
   const [simName, setSimName] = useState('');
   const [simNik, setSimNik] = useState('');
-  const [simUnit, setSimUnit] = useState('SD Islam Al-Azhar');
+  const [simUnit, setSimUnit] = useState('SD Islam Al-Azhar BSD');
   const [simPlafon, setSimPlafon] = useState<number>(10000000);
+  
+  // Real cooperative parameters state
+  const [simGajiPokok, setSimGajiPokok] = useState<number>(8500000);
+  const [simPotonganGaji, setSimPotonganGaji] = useState<number>(2500000);
+  const [simSaldoSimpanan, setSimSaldoSimpanan] = useState<number>(6000000);
+  const [simMasaKerja, setSimMasaKerja] = useState<number>(7);
+  const [simStatusPegawai, setSimStatusPegawai] = useState<'TETAP' | 'KONTRAK'>('TETAP');
+  const [simRiwayat, setSimRiwayat] = useState<'sangat_lancar' | 'tepat_waktu' | 'kurang_lancar'>('sangat_lancar');
+
   const [simScores, setSimScores] = useState<Record<string, number>>({
-    C1: 75,
-    C2: 75,
-    C3: 75,
-    C4: 75,
-    C5: 50,
+    C1: 100,
+    C2: 100,
+    C3: 100,
+    C4: 100,
+    C5: 100,
   });
+
+  // Batch 150 Data Modal State
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState<boolean>(false);
+  const [batchItems, setBatchItems] = useState<SimulationCandidateItem[]>([]);
+  const [batchPastedText, setBatchPastedText] = useState<string>('');
+  const [batchTab, setBatchTab] = useState<'sample150' | 'paste'>('sample150');
+  const [isBatchProcessing, setIsBatchProcessing] = useState<boolean>(false);
+
+  // Search & Filter State for Alternatif & Perangkingan
+  const [searchAltQuery, setSearchAltQuery] = useState<string>('');
+  const [filterRecommendation, setFilterRecommendation] = useState<string>('all');
+  const [itemsPerPage, setItemsPerPage] = useState<number>(20);
+  const [currentAltPage, setCurrentAltPage] = useState<number>(1);
+  const [currentRankPage, setCurrentRankPage] = useState<number>(1);
 
   // Perangkingan View Sub-Tabs (Bab 4 Skripsi)
   const [perangkinganSubTab, setPerangkinganSubTab] = useState<'tahapan' | 'ringkas' | 'manual'>('tahapan');
@@ -116,13 +152,57 @@ export const SmartLabPage: React.FC<Props> = ({ onBackToOperational }) => {
     return ev.loan_application?.nominal_pengajuan || 0;
   };
 
+  // Compute scores dynamically when real parameters change
+  const computeScoresFromRealData = (
+    gaji: number,
+    pot: number,
+    simp: number,
+    masa: number,
+    status: string,
+    riwayat: string,
+    plafon: number
+  ) => {
+    const sisa = Math.max(0, gaji - pot);
+    const rasio = gaji > 0 ? (sisa / gaji) * 100 : 0;
+
+    // C1: Sisa THP
+    let c1 = 25;
+    if (rasio >= 50) c1 = 100;
+    else if (rasio >= 40) c1 = 75;
+
+    // C2: Simpanan Koperasi
+    let c2 = 25;
+    if (simp > 5000000) c2 = 100;
+    else if (simp >= 1000000) c2 = 75;
+
+    // C3: Masa Kerja & Status Kepegawaian
+    let c3 = 25;
+    if (status === 'TETAP') {
+      c3 = masa > 5 ? 100 : 75;
+    }
+
+    // C4: Riwayat Angsuran / Kolektibilitas
+    let c4 = 25;
+    if (riwayat === 'sangat_lancar') c4 = 100;
+    else if (riwayat === 'tepat_waktu') c4 = 75;
+
+    // C5: Plafon Pinjaman (Cost)
+    let c5 = 25;
+    if (plafon <= 10000000) c5 = 100;
+    else if (plafon <= 15000000) c5 = 75;
+
+    return { c1, c2, c3, c4, c5, sisa, rasio };
+  };
+
   const handleOpenSimModal = (sim?: SmartEvaluation) => {
     if (sim) {
       setEditingSim(sim);
       setSimName(sim.candidate_name || '');
       setSimNik(sim.candidate_nik || '');
-      setSimUnit(sim.candidate_unit || 'Unit Akademik');
-      setSimPlafon(sim.candidate_plafon ? Number(sim.candidate_plafon) : 10000000);
+      setSimUnit(sim.candidate_unit || 'SD Islam Al-Azhar BSD');
+      const plaf = sim.candidate_plafon ? Number(sim.candidate_plafon) : 10000000;
+      setSimPlafon(plaf);
+      setSimInputMode('scores');
       setSimScores({
         C1: Number(sim.val_c1),
         C2: Number(sim.val_c2),
@@ -134,19 +214,33 @@ export const SmartLabPage: React.FC<Props> = ({ onBackToOperational }) => {
     } else {
       setEditingSim(null);
       setSimName('');
-      setSimNik('SIM-' + Math.floor(100 + Math.random() * 900));
-      setSimUnit('SD Islam Al-Azhar');
-      setSimPlafon(10000000);
-      
-      const initialScores: Record<string, number> = {};
-      criteria.forEach(c => {
-        if (c.sub_criteria && c.sub_criteria.length > 0) {
-          initialScores[c.code] = c.sub_criteria[0].score_value;
-        } else {
-          initialScores[c.code] = 75;
-        }
+      setSimNik('SIM-' + Math.floor(1000 + Math.random() * 9000));
+      setSimUnit('SD Islam Al-Azhar BSD');
+      const defPlafon = 10000000;
+      const defGaji = 8500000;
+      const defPot = 2500000;
+      const defSimp = 6000000;
+      const defMasa = 7;
+      const defStatus: 'TETAP' | 'KONTRAK' = 'TETAP';
+      const defRiw: 'sangat_lancar' | 'tepat_waktu' | 'kurang_lancar' = 'sangat_lancar';
+
+      setSimPlafon(defPlafon);
+      setSimGajiPokok(defGaji);
+      setSimPotonganGaji(defPot);
+      setSimSaldoSimpanan(defSimp);
+      setSimMasaKerja(defMasa);
+      setSimStatusPegawai(defStatus);
+      setSimRiwayat(defRiw);
+      setSimInputMode('real');
+
+      const calc = computeScoresFromRealData(defGaji, defPot, defSimp, defMasa, defStatus, defRiw, defPlafon);
+      setSimScores({
+        C1: calc.c1,
+        C2: calc.c2,
+        C3: calc.c3,
+        C4: calc.c4,
+        C5: calc.c5,
       });
-      setSimScores(initialScores);
     }
     setIsSimModalOpen(true);
   };
@@ -159,17 +253,44 @@ export const SmartLabPage: React.FC<Props> = ({ onBackToOperational }) => {
     }
 
     try {
+      // If in real mode, recalculate before sending
+      let finalScores = { ...simScores };
+      if (simInputMode === 'real') {
+        const calc = computeScoresFromRealData(
+          simGajiPokok,
+          simPotonganGaji,
+          simSaldoSimpanan,
+          simMasaKerja,
+          simStatusPegawai,
+          simRiwayat,
+          simPlafon
+        );
+        finalScores = {
+          C1: calc.c1,
+          C2: calc.c2,
+          C3: calc.c3,
+          C4: calc.c4,
+          C5: calc.c5,
+        };
+      }
+
       const payload = {
         candidate_name: simName,
         candidate_nik: simNik,
         candidate_unit: simUnit,
         candidate_plafon: simPlafon,
-        val_c1: simScores.C1 ?? 75,
-        val_c2: simScores.C2 ?? 75,
-        val_c3: simScores.C3 ?? 75,
-        val_c4: simScores.C4 ?? 75,
-        val_c5: simScores.C5 ?? 50,
-        dynamic_scores: simScores,
+        val_c1: finalScores.C1 ?? 75,
+        val_c2: finalScores.C2 ?? 75,
+        val_c3: finalScores.C3 ?? 75,
+        val_c4: finalScores.C4 ?? 75,
+        val_c5: finalScores.C5 ?? 50,
+        dynamic_scores: finalScores,
+        gaji_pokok: simGajiPokok,
+        potongan: simPotonganGaji,
+        simpanan: simSaldoSimpanan,
+        masa_kerja: simMasaKerja,
+        status_pegawai: simStatusPegawai,
+        riwayat_angsuran: simRiwayat,
       };
 
       if (editingSim) {
@@ -197,6 +318,134 @@ export const SmartLabPage: React.FC<Props> = ({ onBackToOperational }) => {
     } catch (err: any) {
       alert(err.response?.data?.message || 'Gagal menghapus alternatif.');
     }
+  };
+
+  // Reset ALL simulation records
+  const handleResetAllSimulations = async () => {
+    if (!confirm('Apakah Anda yakin ingin MENGHAPUS SEMUA alternatif simulasi riset? Matriks keputusan akan dikembalikan hanya ke data riil pengajuan koperasi asli.')) {
+      return;
+    }
+
+    setIsCalculating(true);
+    try {
+      const res = await api.delete('/smart/simulations');
+      setMsg({ type: 'success', text: res.data.message || 'Semua data simulasi berhasil direset.' });
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Gagal mereset simulasi.');
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  // Load 150 Real Cooperative Dataset
+  const handleLoadSample150 = () => {
+    const data = generate150CooperativeData();
+    setBatchItems(data);
+    setMsg({ type: 'success', text: '150 Data Empiris Koperasi Al-Azhar BSD berhasil dimuat ke memori. Klik tombol proses untuk menghitung SMART!' });
+  };
+
+  // Parse Pasted Text from Excel / CSV
+  const handleParsePastedText = () => {
+    if (!batchPastedText.trim()) {
+      alert('Silakan tempelkan data teks dari Excel terlebih dahulu.');
+      return;
+    }
+    const parsed = parsePastedData(batchPastedText);
+    if (parsed.length === 0) {
+      alert('Format teks tidak terbaca. Pastikan ada minimal 1 baris data.');
+      return;
+    }
+    setBatchItems(parsed);
+    setMsg({ type: 'success', text: `Berhasil mengekstrak ${parsed.length} baris kandidat dari teks Excel.` });
+  };
+
+  // Execute Batch Processing
+  const handleProcessBatch = async () => {
+    if (batchItems.length === 0) {
+      alert('Daftar data masih kosong. Silakan muat contoh 150 data atau salin data dari spreadsheet.');
+      return;
+    }
+
+    setIsBatchProcessing(true);
+    try {
+      const res = await api.post('/smart/simulations', { batch: batchItems });
+      setMsg({ 
+        type: 'success', 
+        text: res.data.message || `Berhasil memproses ${batchItems.length} alternatif dengan 5 tahap metode SMART.` 
+      });
+      setIsBatchModalOpen(false);
+      setBatchItems([]);
+      setBatchPastedText('');
+      fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Gagal memproses kalkulasi batch SMART.');
+    } finally {
+      setIsBatchProcessing(false);
+    }
+  };
+
+  // Export Results to CSV for Thesis Appendix (Excel)
+  const handleExportCSV = () => {
+    if (evaluations.length === 0) {
+      alert('Tidak ada data evaluasi untuk diekspor.');
+      return;
+    }
+
+    const headers = [
+      'Ranking',
+      'Kode Alternatif',
+      'Nama Calon / Anggota',
+      'NIK',
+      'Unit Kerja',
+      'Nominal Plafon',
+      'C1 (Sisa THP)',
+      'C2 (Simpanan)',
+      'C3 (Masa Kerja)',
+      'C4 (Riwayat)',
+      'C5 (Plafon Cost)',
+      'u1 (C1)',
+      'u2 (C2)',
+      'u3 (C3)',
+      'u4 (C4)',
+      'u5 (C5)',
+      'Nilai Akhir V(Ai)',
+      'Rekomendasi Kelayakan',
+      'Sumber Data'
+    ];
+
+    const rows = evaluations.map((ev) => [
+      ev.rank ?? '-',
+      ev.alternative_code,
+      `"${getCandidateName(ev).replace(/"/g, '""')}"`,
+      `"${getCandidateNik(ev)}"`,
+      `"${getCandidateUnit(ev)}"`,
+      getCandidatePlafon(ev),
+      ev.val_c1,
+      ev.val_c2,
+      ev.val_c3,
+      ev.val_c4,
+      ev.val_c5,
+      ev.utility_c1,
+      ev.utility_c2,
+      ev.utility_c3,
+      ev.utility_c4,
+      ev.utility_c5,
+      ev.final_score,
+      `"${ev.recommendation}"`,
+      ev.is_manual_simulation ? 'Simulasi Riset' : 'Data Riil Koperasi'
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF'
+      + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\r\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Rekapitulasi_SMART_${evaluations.length}_Alternatif_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const fetchData = async () => {
@@ -718,103 +967,295 @@ export const SmartLabPage: React.FC<Props> = ({ onBackToOperational }) => {
           )}
 
           {/* ============================================================== */}
-          {/* MENU 4: DATA ALTERNATIF (Ai)                                   */}
+          {/* MENU 4: DATA ALTERNATIF (Ai) & SIMULASI 150 DATA KOPERASI     */}
           {/* ============================================================== */}
-          {activeMenu === 'alternatif' && (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="font-bold text-sm text-slate-900">Data Alternatif Calon Penerima Kredit</h3>
-                  <p className="text-[11px] text-slate-500">
-                    Daftar kandidat yang dinilai dalam sistem pendukung keputusan (Data Riil Koperasi + Simulasi Peneliti).
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
-                    {evaluations.length} Alternatif Terdata
-                  </span>
-                  <button
-                    onClick={() => handleOpenSimModal()}
-                    className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Tambah Alternatif Simulasi</span>
-                  </button>
-                </div>
-              </div>
+          {activeMenu === 'alternatif' && (() => {
+            const hasSimData = evaluations.some(e => e.is_manual_simulation);
+            const totalCount = evaluations.length;
+            const simCount = evaluations.filter(e => e.is_manual_simulation).length;
+            const realCount = totalCount - simCount;
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="bg-slate-50/70 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
-                      <th className="py-3 px-4">Kode (Ai)</th>
-                      <th className="py-3 px-4">Nama Alternatif</th>
-                      <th className="py-3 px-4">NIK / ID</th>
-                      <th className="py-3 px-4">Unit Kerja</th>
-                      <th className="py-3 px-4">Status Kepegawaian</th>
-                      <th className="py-3 px-4">Plafon Diajukan</th>
-                      <th className="py-3 px-4">Sumber Data</th>
-                      <th className="py-3 px-4 text-center">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {evaluations.map((ev) => {
-                      const user = ev.loan_application?.user;
-                      const isSim = !!ev.is_manual_simulation;
+            const filtered = evaluations.filter((ev) => {
+              const name = getCandidateName(ev).toLowerCase();
+              const nik = getCandidateNik(ev).toLowerCase();
+              const unit = getCandidateUnit(ev).toLowerCase();
+              const code = ev.alternative_code.toLowerCase();
+              const q = searchAltQuery.toLowerCase().trim();
 
-                      return (
-                        <tr key={ev.id} className="hover:bg-slate-50/80 transition">
-                          <td className="py-3.5 px-4 font-bold font-mono text-slate-900">{ev.alternative_code}</td>
-                          <td className="py-3.5 px-4 font-bold text-slate-900">{getCandidateName(ev)}</td>
-                          <td className="py-3.5 px-4 font-mono text-slate-500">{getCandidateNik(ev)}</td>
-                          <td className="py-3.5 px-4">{getCandidateUnit(ev)}</td>
-                          <td className="py-3.5 px-4">
-                            {isSim ? 'Pegawai Yayasan / Simulasi' : `${user?.status_pegawai || 'TETAP'} (${user?.masa_kerja_tahun || 5} Thn)`}
-                          </td>
-                          <td className="py-3.5 px-4 font-bold text-slate-900">
-                            {formatCurrency(getCandidatePlafon(ev))}
-                          </td>
-                          <td className="py-3.5 px-4">
-                            {isSim ? (
-                              <span className="text-[10px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200">
-                                Simulasi Manual Peneliti
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
-                                Data Riil Koperasi
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4 text-center">
-                            {isSim ? (
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button
-                                  onClick={() => handleOpenSimModal(ev)}
-                                  className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
-                                  title="Edit Penilaian Alternatif Simulasi"
-                                >
-                                  <Edit3 className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteSimulation(ev.id, ev.candidate_name)}
-                                  className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                                  title="Hapus Alternatif Simulasi"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-slate-400 text-[11px] italic">Terkunci (Koperasi)</span>
-                            )}
+              const matchesSearch = !q || name.includes(q) || nik.includes(q) || unit.includes(q) || code.includes(q);
+
+              const matchesRecom = filterRecommendation === 'all'
+                || (filterRecommendation === 'sangat' && ev.recommendation?.toLowerCase().includes('sangat'))
+                || (filterRecommendation === 'layak' && ev.recommendation?.toLowerCase().includes('penyesuaian'))
+                || (filterRecommendation === 'tidak' && ev.recommendation?.toLowerCase().includes('tidak'));
+
+              return matchesSearch && matchesRecom;
+            });
+
+            const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+            const safeCurrentPage = Math.min(currentAltPage, totalPages);
+            const startIdx = (safeCurrentPage - 1) * itemsPerPage;
+            const pageData = filtered.slice(startIdx, startIdx + itemsPerPage);
+
+            return (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden space-y-4 p-5">
+                {/* Header Section */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-900 text-white px-2 py-0.5 rounded">
+                        Laboratorium SPK
+                      </span>
+                      <span className="text-xs text-slate-500 font-medium">Data Calon Alternatif &amp; Uji Empiris 150 Data</span>
+                    </div>
+                    <h3 className="font-bold text-base text-slate-900 mt-1">
+                      Data Alternatif Calon Penerima Kredit ({totalCount} Alternatif)
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Kelola dan hitung data kandidat pemohon pinjaman berdasarkan data riil Koperasi Al-Azhar BSD maupun batch simulasi 150 data.
+                    </p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setBatchItems([]);
+                        setBatchPastedText('');
+                        setIsBatchModalOpen(true);
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5"
+                    >
+                      <FileSpreadsheet className="w-4 h-4" />
+                      <span>📥 Import / Uji 150 Data (Excel)</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleOpenSimModal()}
+                      className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ Input 1 Data Riil Manual</span>
+                    </button>
+
+                    <button
+                      onClick={handleExportCSV}
+                      disabled={evaluations.length === 0}
+                      className="px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition flex items-center gap-1.5"
+                      title="Unduh seluruh data alternatif & skor SMART ke file Excel CSV"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Export CSV</span>
+                    </button>
+
+                    {hasSimData && (
+                      <button
+                        onClick={handleResetAllSimulations}
+                        className="px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs transition flex items-center gap-1.5"
+                        title="Hapus semua alternatif simulasi riset"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Reset Simulasi</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Badge Stats & Filter Bar */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/70 p-3 rounded-xl border border-slate-200 text-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-medium text-slate-500">Statistik Matriks:</span>
+                    <span className="bg-emerald-100/80 text-emerald-900 font-semibold px-2 py-0.5 rounded text-[11px] border border-emerald-200">
+                      {realCount} Data Riil Koperasi
+                    </span>
+                    <span className="bg-amber-100/80 text-amber-900 font-semibold px-2 py-0.5 rounded text-[11px] border border-amber-200">
+                      {simCount} Simulasi Riset
+                    </span>
+                    <span className="bg-slate-200/80 text-slate-800 font-bold px-2 py-0.5 rounded text-[11px]">
+                      Total: {totalCount} Kandidat
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Search Input */}
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={searchAltQuery}
+                        onChange={(e) => {
+                          setSearchAltQuery(e.target.value);
+                          setCurrentAltPage(1);
+                        }}
+                        placeholder="Cari Nama, NIK, Kode..."
+                        className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:border-emerald-600 w-44"
+                      />
+                    </div>
+
+                    {/* Filter Rekomendasi */}
+                    <select
+                      value={filterRecommendation}
+                      onChange={(e) => {
+                        setFilterRecommendation(e.target.value);
+                        setCurrentAltPage(1);
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none focus:border-emerald-600"
+                    >
+                      <option value="all">Semua Rekomendasi</option>
+                      <option value="sangat">Sangat Layak</option>
+                      <option value="layak">Layak (Penyesuaian)</option>
+                      <option value="tidak">Tidak Layak</option>
+                    </select>
+
+                    {/* Page Size */}
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentAltPage(1);
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white font-medium focus:outline-none focus:border-emerald-600"
+                    >
+                      <option value={15}>15 baris</option>
+                      <option value={30}>30 baris</option>
+                      <option value={50}>50 baris</option>
+                      <option value={150}>150 baris (Semua)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Table Data */}
+                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                        <th className="py-3 px-3.5">Kode</th>
+                        <th className="py-3 px-3.5">Nama Alternatif</th>
+                        <th className="py-3 px-3.5">NIK / ID</th>
+                        <th className="py-3 px-3.5">Unit Kerja</th>
+                        <th className="py-3 px-3.5">Plafon Diajukan</th>
+                        <th className="py-3 px-3.5 text-center">Nilai Parameter [C1 - C5]</th>
+                        <th className="py-3 px-3.5">Skor Akhir &amp; Rank</th>
+                        <th className="py-3 px-3.5">Sumber Data</th>
+                        <th className="py-3 px-3.5 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      {pageData.length > 0 ? (
+                        pageData.map((ev) => {
+                          const isSim = !!ev.is_manual_simulation;
+                          const name = getCandidateName(ev);
+                          const nik = getCandidateNik(ev);
+                          const unit = getCandidateUnit(ev);
+                          const plafon = getCandidatePlafon(ev);
+
+                          return (
+                            <tr key={ev.id} className="hover:bg-slate-50/80 transition">
+                              <td className="py-3 px-3.5 font-bold font-mono text-slate-900">{ev.alternative_code}</td>
+                              <td className="py-3 px-3.5 font-bold text-slate-900">{name}</td>
+                              <td className="py-3 px-3.5 font-mono text-slate-500">{nik}</td>
+                              <td className="py-3 px-3.5">{unit}</td>
+                              <td className="py-3 px-3.5 font-bold text-slate-900">
+                                {formatCurrency(plafon)}
+                              </td>
+                              <td className="py-3 px-3.5 text-center">
+                                <span className="font-mono text-[11px] font-semibold bg-slate-100 px-2 py-0.5 rounded text-slate-700 border border-slate-200">
+                                  [{ev.val_c1}, {ev.val_c2}, {ev.val_c3}, {ev.val_c4}, {ev.val_c5}]
+                                </span>
+                              </td>
+                              <td className="py-3 px-3.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold font-mono text-emerald-700 text-xs">
+                                    {ev.final_score}
+                                  </span>
+                                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                    #{ev.rank || '-'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-3 px-3.5">
+                                {isSim ? (
+                                  <span className="text-[10px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                    Simulasi Peneliti
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                    Riil Koperasi
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3 px-3.5 text-center">
+                                {isSim ? (
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <button
+                                      onClick={() => handleOpenSimModal(ev)}
+                                      className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
+                                      title="Edit Penilaian Alternatif Simulasi"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteSimulation(ev.id, ev.candidate_name)}
+                                      className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                      title="Hapus Alternatif Simulasi"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-400 text-[10px] italic">Terkunci</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={9} className="py-8 text-center text-slate-400 text-xs">
+                            Tidak ada data alternatif yang sesuai dengan kata kunci pencarian.
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 pt-2 border-t border-slate-100">
+                  <div>
+                    Menampilkan <strong className="text-slate-900">{filtered.length > 0 ? startIdx + 1 : 0}</strong> s.d.{' '}
+                    <strong className="text-slate-900">{Math.min(startIdx + itemsPerPage, filtered.length)}</strong> dari{' '}
+                    <strong className="text-slate-900">{filtered.length}</strong> alternatif
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setCurrentAltPage(prev => Math.max(1, prev - 1))}
+                      disabled={safeCurrentPage <= 1}
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-semibold text-slate-700 flex items-center gap-1"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      <span>Sebelumnya</span>
+                    </button>
+
+                    <div className="px-3 py-1 font-mono font-bold text-slate-900 bg-slate-100 rounded-lg">
+                      {safeCurrentPage} / {totalPages}
+                    </div>
+
+                    <button
+                      onClick={() => setCurrentAltPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={safeCurrentPage >= totalPages}
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed font-semibold text-slate-700 flex items-center gap-1"
+                    >
+                      <span>Selanjutnya</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ============================================================== */}
           {/* MENU 5: EKSEKUSI PERANGKINGAN & 5 TAHAP MATEMATIS SMART       */}
@@ -932,6 +1373,16 @@ Total Bobot: ${(w1 + w2 + w3 + w4 + w5).toFixed(2)} = 1.00 (100%)
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleExportCSV}
+                      disabled={evaluations.length === 0}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition flex items-center gap-1.5"
+                      title="Ekspor seluruh hasil perhitungan 5 tahapan SMART ke file CSV Excel"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Export Rekapitulasi (CSV)</span>
+                    </button>
+
                     <button
                       onClick={handleRecalculateAll}
                       disabled={isCalculating}
@@ -1925,17 +2376,23 @@ Total Bobot: ${(w1 + w2 + w3 + w4 + w5).toFixed(2)} = 1.00 (100%)
         </div>
       )}
 
-      {/* MODAL: INPUT ALTERNATIF SIMULASI DINAMIS */}
+      {/* MODAL: INPUT ALTERNATIF SIMULASI DINAMIS & DATA RIIL KOPERASI */}
       {isSimModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full overflow-hidden border border-slate-200 my-8">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full overflow-hidden border border-slate-200 my-8">
             <div className="p-5 bg-slate-900 text-white flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-sm">
-                  {editingSim ? 'Edit Alternatif Simulasi Riset' : 'Tambah Alternatif Simulasi Riset'}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded">
+                    Lab Riset SPK
+                  </span>
+                  <span className="text-xs text-slate-400">Metode SMART</span>
+                </div>
+                <h3 className="font-bold text-sm text-white mt-1">
+                  {editingSim ? 'Edit Alternatif Simulasi Riset' : 'Input Alternatif Baru (Data Riil Koperasi)'}
                 </h3>
                 <p className="text-[11px] text-slate-400">
-                  Input calon kandidat dan tentukan skor penilaian kriteria secara dinamis.
+                  Input data calon pemohon dengan data finansial riil koperasi atau tentukan skor skala kriteria langsung.
                 </p>
               </div>
               <button 
@@ -1946,7 +2403,35 @@ Total Bobot: ${(w1 + w2 + w3 + w4 + w5).toFixed(2)} = 1.00 (100%)
               </button>
             </div>
 
-            <form onSubmit={handleSaveSimulation} className="p-6 space-y-4 text-xs">
+            {/* Mode Switcher Tabs */}
+            <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setSimInputMode('real')}
+                className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
+                  simInputMode === 'real'
+                    ? 'border-emerald-600 text-emerald-700'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Wallet className="w-3.5 h-3.5" />
+                <span>🏢 Mode Data Riil Koperasi (Slip Gaji &amp; Simpanan)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSimInputMode('scores')}
+                className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
+                  simInputMode === 'scores'
+                    ? 'border-emerald-600 text-emerald-700'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>⚙️ Mode Skor Kriteria Langsung (C1 - C5)</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSimulation} className="p-6 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
               
               {/* Bagian 1: Identitas Calon */}
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
@@ -1964,7 +2449,7 @@ Total Bobot: ${(w1 + w2 + w3 + w4 + w5).toFixed(2)} = 1.00 (100%)
                       required
                       value={simName}
                       onChange={(e) => setSimName(e.target.value)}
-                      placeholder="misal: Dr. H. Bambang Sutejo"
+                      placeholder="misal: Achmad Sobari, M.Pd"
                       className="w-full p-2.5 rounded-lg border border-slate-300 font-semibold text-slate-900 bg-white focus:outline-none focus:border-emerald-600"
                     />
                   </div>
@@ -1977,7 +2462,7 @@ Total Bobot: ${(w1 + w2 + w3 + w4 + w5).toFixed(2)} = 1.00 (100%)
                       type="text"
                       value={simNik}
                       onChange={(e) => setSimNik(e.target.value)}
-                      placeholder="misal: SIM-001"
+                      placeholder="misal: 3209071808830004"
                       className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-slate-700 bg-white focus:outline-none focus:border-emerald-600"
                     />
                   </div>
@@ -1986,101 +2471,321 @@ Total Bobot: ${(w1 + w2 + w3 + w4 + w5).toFixed(2)} = 1.00 (100%)
                     <label className="block font-semibold text-slate-700 mb-1">
                       Unit Kerja / Lembaga
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={simUnit}
                       onChange={(e) => setSimUnit(e.target.value)}
-                      placeholder="misal: SMA Islam Al-Azhar BSD"
-                      className="w-full p-2.5 rounded-lg border border-slate-300 text-slate-700 bg-white focus:outline-none focus:border-emerald-600"
-                    />
+                      className="w-full p-2.5 rounded-lg border border-slate-300 font-medium text-slate-800 bg-white focus:outline-none focus:border-emerald-600"
+                    >
+                      <option value="SD Islam Al-Azhar BSD">SD Islam Al-Azhar BSD</option>
+                      <option value="SMP Islam Al-Azhar BSD">SMP Islam Al-Azhar BSD</option>
+                      <option value="SMA Islam Al-Azhar BSD">SMA Islam Al-Azhar BSD</option>
+                      <option value="TK Islam Al-Azhar BSD">TK Islam Al-Azhar BSD</option>
+                      <option value="Pelaksana Harian (LAKHAR)">Pelaksana Harian (LAKHAR)</option>
+                      <option value="Bagian Keuangan Yayasan">Bagian Keuangan Yayasan</option>
+                      <option value="Bagian Sarana &amp; Prasarana">Bagian Sarana &amp; Prasarana</option>
+                      <option value="Unit Lainnya">Unit Lainnya</option>
+                    </select>
                   </div>
 
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">
-                      Plafon Pengajuan Pinjaman (Rp)
+                      Plafon Pinjaman Diajukan (Rp) <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="number"
                       step={500000}
                       min={1000000}
+                      required
                       value={simPlafon}
-                      onChange={(e) => setSimPlafon(Number(e.target.value))}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setSimPlafon(val);
+                        if (simInputMode === 'real') {
+                          const calc = computeScoresFromRealData(simGajiPokok, simPotonganGaji, simSaldoSimpanan, simMasaKerja, simStatusPegawai, simRiwayat, val);
+                          setSimScores({ C1: calc.c1, C2: calc.c2, C3: calc.c3, C4: calc.c4, C5: calc.c5 });
+                        }
+                      }}
                       className="w-full p-2.5 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 bg-white focus:outline-none focus:border-emerald-600"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Bagian 2: Penilaian Kriteria Dinamis */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
-                  <span className="font-bold text-slate-900 text-xs">
-                    2. Penilaian Kriteria Kelayakan (Metode SMART)
-                  </span>
-                  <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    Otomatis Menghitung Utilitas
-                  </span>
-                </div>
+              {/* Bagian 2A: Mode Data Riil Koperasi */}
+              {simInputMode === 'real' && (() => {
+                const sisa = Math.max(0, simGajiPokok - simPotonganGaji);
+                const rasio = simGajiPokok > 0 ? (sisa / simGajiPokok) * 100 : 0;
+                const calc = computeScoresFromRealData(simGajiPokok, simPotonganGaji, simSaldoSimpanan, simMasaKerja, simStatusPegawai, simRiwayat, simPlafon);
 
-                <div className="space-y-3 pt-1">
-                  {criteria.map((c) => {
-                    const currentScore = simScores[c.code] ?? 75;
-                    const hasSub = c.sub_criteria && c.sub_criteria.length > 0;
+                return (
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                      <span className="font-bold text-slate-900 text-xs">
+                        2. Parameter Riil Koperasi (Slip Gaji &amp; Arsip Simpin)
+                      </span>
+                      <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        Auto-Mapping ke Kriteria SMART
+                      </span>
+                    </div>
 
-                    return (
-                      <div key={c.id} className="p-3 rounded-lg bg-white border border-slate-200 space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono font-bold text-xs bg-slate-900 text-white px-2 py-0.5 rounded">
-                              {c.code}
-                            </span>
-                            <span className="font-bold text-xs text-slate-900">
-                              {c.name}
-                            </span>
-                            <span className="text-[10px] text-slate-400">
-                              ({c.type.toUpperCase()} • Bobot {c.normalized_weight})
+                    {/* C1: Gaji & Potongan */}
+                    <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                          <Coins className="w-4 h-4 text-emerald-600" />
+                          <span>Kriteria C1: Kapasitas Finansial (Slip Gaji)</span>
+                        </span>
+                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          Skor C1: {calc.c1} ({rasio >= 50 ? '≥50%' : rasio >= 40 ? '40-49%' : '<40%'})
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">Gaji Pokok / Total Penghasilan</label>
+                          <input
+                            type="number"
+                            step={100000}
+                            min={1000000}
+                            value={simGajiPokok}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setSimGajiPokok(val);
+                              const c = computeScoresFromRealData(val, simPotonganGaji, simSaldoSimpanan, simMasaKerja, simStatusPegawai, simRiwayat, simPlafon);
+                              setSimScores({ C1: c.c1, C2: c.c2, C3: c.c3, C4: c.c4, C5: c.c5 });
+                            }}
+                            className="w-full p-2 rounded-lg border border-slate-300 font-mono font-bold text-slate-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">Total Potongan Rutin</label>
+                          <input
+                            type="number"
+                            step={100000}
+                            min={0}
+                            value={simPotonganGaji}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setSimPotonganGaji(val);
+                              const c = computeScoresFromRealData(simGajiPokok, val, simSaldoSimpanan, simMasaKerja, simStatusPegawai, simRiwayat, simPlafon);
+                              setSimScores({ C1: c.c1, C2: c.c2, C3: c.c3, C4: c.c4, C5: c.c5 });
+                            }}
+                            className="w-full p-2 rounded-lg border border-slate-300 font-mono font-bold text-slate-900"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200 text-[11px]">
+                        <div>
+                          Sisa THP: <strong className="text-slate-900">{formatCurrency(sisa)}</strong>
+                        </div>
+                        <div>
+                          Rasio Sisa Gaji:{' '}
+                          <strong className={rasio >= 50 ? 'text-emerald-700 font-bold' : rasio >= 40 ? 'text-amber-700 font-bold' : 'text-rose-700 font-bold'}>
+                            {rasio.toFixed(1)}%
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* C2: Simpanan Koperasi */}
+                    <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                          <Wallet className="w-4 h-4 text-emerald-600" />
+                          <span>Kriteria C2: Saldo Simpanan (Wajib &amp; Pokok)</span>
+                        </span>
+                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          Skor C2: {calc.c2} ({simSaldoSimpanan > 5000000 ? '> Rp 5 Jt' : simSaldoSimpanan >= 1000000 ? 'Rp 1-5 Jt' : '< Rp 1 Jt'})
+                        </span>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">Saldo Simpanan di Koperasi (Rp)</label>
+                        <input
+                          type="number"
+                          step={500000}
+                          min={0}
+                          value={simSaldoSimpanan}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setSimSaldoSimpanan(val);
+                            const c = computeScoresFromRealData(simGajiPokok, simPotonganGaji, val, simMasaKerja, simStatusPegawai, simRiwayat, simPlafon);
+                            setSimScores({ C1: c.c1, C2: c.c2, C3: c.c3, C4: c.c4, C5: c.c5 });
+                          }}
+                          className="w-full p-2 rounded-lg border border-slate-300 font-mono font-bold text-slate-900"
+                        />
+                      </div>
+                    </div>
+
+                    {/* C3: Masa Kerja & Status */}
+                    <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                          <Briefcase className="w-4 h-4 text-emerald-600" />
+                          <span>Kriteria C3: Masa Kerja &amp; Status Kepegawaian</span>
+                        </span>
+                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          Skor C3: {calc.c3} ({simStatusPegawai === 'TETAP' ? (simMasaKerja > 5 ? 'Tetap >5 Thn' : 'Tetap ≤5 Thn') : 'Kontrak'})
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">Masa Kerja (Tahun)</label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={40}
+                            value={simMasaKerja}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setSimMasaKerja(val);
+                              const c = computeScoresFromRealData(simGajiPokok, simPotonganGaji, simSaldoSimpanan, val, simStatusPegawai, simRiwayat, simPlafon);
+                              setSimScores({ C1: c.c1, C2: c.c2, C3: c.c3, C4: c.c4, C5: c.c5 });
+                            }}
+                            className="w-full p-2 rounded-lg border border-slate-300 font-mono font-bold text-slate-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">Status Kepegawaian</label>
+                          <select
+                            value={simStatusPegawai}
+                            onChange={(e: any) => {
+                              const val = e.target.value;
+                              setSimStatusPegawai(val);
+                              const c = computeScoresFromRealData(simGajiPokok, simPotonganGaji, simSaldoSimpanan, simMasaKerja, val, simRiwayat, simPlafon);
+                              setSimScores({ C1: c.c1, C2: c.c2, C3: c.c3, C4: c.c4, C5: c.c5 });
+                            }}
+                            className="w-full p-2 rounded-lg border border-slate-300 font-semibold text-slate-900"
+                          >
+                            <option value="TETAP">Pegawai Tetap Yayasan</option>
+                            <option value="KONTRAK">Pegawai Kontrak / PKWT</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* C4: Riwayat Angsuran */}
+                    <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>Kriteria C4: Riwayat Kredit / Kolektibilitas</span>
+                        </span>
+                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          Skor C4: {calc.c4}
+                        </span>
+                      </div>
+                      <select
+                        value={simRiwayat}
+                        onChange={(e: any) => {
+                          const val = e.target.value;
+                          setSimRiwayat(val);
+                          const c = computeScoresFromRealData(simGajiPokok, simPotonganGaji, simSaldoSimpanan, simMasaKerja, simStatusPegawai, val, simPlafon);
+                          setSimScores({ C1: c.c1, C2: c.c2, C3: c.c3, C4: c.c4, C5: c.c5 });
+                        }}
+                        className="w-full p-2 rounded-lg border border-slate-300 font-medium text-slate-900"
+                      >
+                        <option value="sangat_lancar">Sangat Lancar / Anggota Baru (Kolektibilitas 1) — Skor 100</option>
+                        <option value="tepat_waktu">Pernah Pinjam &amp; Lunas Tepat Waktu — Skor 75</option>
+                        <option value="kurang_lancar">Pernah Ada Keterlambatan / Restrukturisasi — Skor 25</option>
+                      </select>
+                    </div>
+
+                    {/* Matriks Skor Terbentuk */}
+                    <div className="p-3 bg-slate-900 text-white rounded-xl flex items-center justify-between text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-semibold block">
+                          Matriks Parameter SMART [X]
+                        </span>
+                        <span className="font-mono font-bold text-emerald-400">
+                          [C1: {calc.c1}, C2: {calc.c2}, C3: {calc.c3}, C4: {calc.c4}, C5: {calc.c5}]
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-400 block">Kriteria C5 (Cost):</span>
+                        <span className="text-[11px] font-semibold text-slate-300">
+                          Plafon {formatCurrency(simPlafon)}
+                        </span>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })()}
+
+              {/* Bagian 2B: Mode Skor Kriteria Skripsi Langsung */}
+              {simInputMode === 'scores' && (
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                    <span className="font-bold text-slate-900 text-xs">
+                      2. Penilaian Kriteria Kelayakan Langsung (Metode SMART)
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      Skala 25 s.d. 100
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 pt-1">
+                    {criteria.map((c) => {
+                      const currentScore = simScores[c.code] ?? 75;
+                      const hasSub = c.sub_criteria && c.sub_criteria.length > 0;
+
+                      return (
+                        <div key={c.id} className="p-3 rounded-lg bg-white border border-slate-200 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-xs bg-slate-900 text-white px-2 py-0.5 rounded">
+                                {c.code}
+                              </span>
+                              <span className="font-bold text-xs text-slate-900">
+                                {c.name}
+                              </span>
+                              <span className="text-[10px] text-slate-400">
+                                ({c.type.toUpperCase()} • Bobot {c.normalized_weight})
+                              </span>
+                            </div>
+                            <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border ${
+                              currentScore >= 75
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : currentScore >= 50
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : 'bg-rose-50 text-rose-800 border-rose-200'
+                            }`}>
+                              Skor: {currentScore}
                             </span>
                           </div>
-                          <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border ${
-                            currentScore >= 75
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                              : currentScore >= 50
-                              ? 'bg-amber-50 text-amber-800 border-amber-200'
-                              : 'bg-rose-50 text-rose-800 border-rose-200'
-                          }`}>
-                            Skor: {currentScore}
-                          </span>
-                        </div>
 
-                        {hasSub ? (
-                          <select
-                            value={currentScore}
-                            onChange={(e) => setSimScores({ ...simScores, [c.code]: Number(e.target.value) })}
-                            className="w-full p-2 rounded-lg border border-slate-300 font-medium text-slate-800 bg-white focus:outline-none focus:border-emerald-600 text-xs"
-                          >
-                            {c.sub_criteria!.map((sub) => (
-                              <option key={sub.id} value={sub.score_value}>
-                                [Nilai {sub.score_value}] — {sub.label}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <select
-                            value={currentScore}
-                            onChange={(e) => setSimScores({ ...simScores, [c.code]: Number(e.target.value) })}
-                            className="w-full p-2 rounded-lg border border-slate-300 font-medium text-slate-800 bg-white focus:outline-none focus:border-emerald-600 text-xs"
-                          >
-                            <option value={100}>[Nilai 100] — Sangat Baik / Sangat Layak</option>
-                            <option value={75}>[Nilai 75] — Baik / Cukup Aman</option>
-                            <option value={50}>[Nilai 50] — Cukup / Standar Minimum</option>
-                            <option value={25}>[Nilai 25] — Kurang / Berisiko</option>
-                          </select>
-                        )}
-                      </div>
-                    );
-                  })}
+                          {hasSub ? (
+                            <select
+                              value={currentScore}
+                              onChange={(e) => setSimScores({ ...simScores, [c.code]: Number(e.target.value) })}
+                              className="w-full p-2 rounded-lg border border-slate-300 font-medium text-slate-800 bg-white focus:outline-none focus:border-emerald-600 text-xs"
+                            >
+                              {c.sub_criteria!.map((sub) => (
+                                <option key={sub.id} value={sub.score_value}>
+                                  [Nilai {sub.score_value}] — {sub.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <select
+                              value={currentScore}
+                              onChange={(e) => setSimScores({ ...simScores, [c.code]: Number(e.target.value) })}
+                              className="w-full p-2 rounded-lg border border-slate-300 font-medium text-slate-800 bg-white focus:outline-none focus:border-emerald-600 text-xs"
+                            >
+                              <option value={100}>[Nilai 100] — Sangat Baik / Sangat Layak</option>
+                              <option value={75}>[Nilai 75] — Baik / Cukup Aman</option>
+                              <option value={50}>[Nilai 50] — Cukup / Standar Minimum</option>
+                              <option value={25}>[Nilai 25] — Kurang / Berisiko</option>
+                            </select>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
@@ -2101,6 +2806,200 @@ Total Bobot: ${(w1 + w2 + w3 + w4 + w5).toFixed(2)} = 1.00 (100%)
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: BATCH IMPORT & UJI 150 DATA EMPIRIS KOPERASI (METODE SMART)       */}
+      {/* ========================================================================= */}
+      {isBatchModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full overflow-hidden border border-slate-200 my-8">
+            <div className="p-5 bg-slate-900 text-white flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded">
+                    Uji Komputasi 150 Data
+                  </span>
+                  <span className="text-xs text-slate-400">Pengujian Bab 4 Skripsi</span>
+                </div>
+                <h3 className="font-bold text-sm text-white mt-1">
+                  Import &amp; Kalkulasi Batch 150 Alternatif Data Riil Koperasi
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Muat dataset empiris 150 anggota Koperasi Al-Azhar BSD atau tempel data langsung dari Microsoft Excel / Google Sheets.
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsBatchModalOpen(false)} 
+                className="text-slate-400 hover:text-white font-bold p-1 text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Batch Navigation Tabs */}
+            <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setBatchTab('sample150')}
+                className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
+                  batchTab === 'sample150'
+                    ? 'border-emerald-600 text-emerald-700'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>⚡ 1-Click: Muat 150 Dataset Riil Koperasi Al-Azhar BSD</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setBatchTab('paste')}
+                className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition flex items-center gap-1.5 ${
+                  batchTab === 'paste'
+                    ? 'border-emerald-600 text-emerald-700'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>📋 Salin-Tempel dari Excel / Spreadsheet</span>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
+              
+              {/* TAB 1: 1-Click 150 Sample Generator */}
+              {batchTab === 'sample150' && (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200 text-emerald-900 space-y-2">
+                    <span className="font-bold text-xs block text-emerald-950">
+                      Dataset Empiris 150 Alternatif Anggota Koperasi
+                    </span>
+                    <p className="text-[11px] leading-relaxed text-emerald-800">
+                      Sistem telah menyediakan 150 catatan data realistis anggota Koperasi Konsumen Karyawan Al-Azhar BSD 
+                      (kombinasi 150 guru SD, SMP, SMA, TK, staf LAKHAR, dan bagian keuangan). 
+                      Setiap data mencakup parameter riil: gaji pokok (Rp 4.5jt s.d 15jt), potongan slip gaji, saldo simpanan, 
+                      masa kerja (1-25 tahun), riwayat kolektibilitas, dan nominal pengajuan plafon pinjaman.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleLoadSample150}
+                      className="mt-2 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Muat 150 Data Empiris ke Memori</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: Salin-Tempel dari Excel */}
+              {batchTab === 'paste' && (
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 text-[11px] space-y-1">
+                    <span className="font-bold text-slate-800 block">Panduan Format Salin-Tempel dari Excel:</span>
+                    <p>Blok tabel di Excel lalu Copy (Ctrl+C) dan Paste (Ctrl+V) ke dalam kotak di bawah ini.</p>
+                    <p className="font-mono text-[10px] text-slate-500">
+                      Urutan Kolom: Nama [Tab] NIK [Tab] Unit [Tab] C1 [Tab] C2 [Tab] C3 [Tab] C4 [Tab] Plafon
+                    </p>
+                  </div>
+
+                  <textarea
+                    rows={6}
+                    value={batchPastedText}
+                    onChange={(e) => setBatchPastedText(e.target.value)}
+                    placeholder="Tempelkan baris data Excel di sini..."
+                    className="w-full p-3 rounded-xl border border-slate-300 font-mono text-[11px] text-slate-800 bg-white focus:outline-none focus:border-emerald-600"
+                  />
+
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleParsePastedText}
+                      className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition"
+                    >
+                      Pratinjau Data Tempelan
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Area Pratinjau Dataset Siap Hitung */}
+              {batchItems.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900 text-xs">
+                      Pratinjau Data ({batchItems.length} Alternatif Terdata)
+                    </span>
+                    <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Siap Diproses SMART
+                    </span>
+                  </div>
+
+                  <div className="max-h-56 overflow-y-auto rounded-xl border border-slate-200">
+                    <table className="w-full text-left text-[11px]">
+                      <thead className="bg-slate-50 sticky top-0 border-b border-slate-200 font-semibold text-slate-600">
+                        <tr>
+                          <th className="py-2 px-3">No</th>
+                          <th className="py-2 px-3">Nama Anggota</th>
+                          <th className="py-2 px-3">NIK</th>
+                          <th className="py-2 px-3">Unit</th>
+                          <th className="py-2 px-3">Plafon</th>
+                          <th className="py-2 px-3 text-center">[C1 - C5]</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {batchItems.slice(0, 100).map((item, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50">
+                            <td className="py-2 px-3 font-mono text-slate-400">{idx + 1}</td>
+                            <td className="py-2 px-3 font-semibold text-slate-900">{item.candidate_name}</td>
+                            <td className="py-2 px-3 font-mono text-slate-500">{item.candidate_nik}</td>
+                            <td className="py-2 px-3">{item.candidate_unit}</td>
+                            <td className="py-2 px-3 font-mono">{formatCurrency(item.candidate_plafon)}</td>
+                            <td className="py-2 px-3 text-center font-mono font-semibold text-emerald-800">
+                              [{item.val_c1}, {item.val_c2}, {item.val_c3}, {item.val_c4}, {item.val_c5}]
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {batchItems.length > 100 && (
+                    <p className="text-[10px] text-slate-400 text-center italic">
+                      Menampilkan 100 dari total {batchItems.length} baris data yang siap dihitung.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsBatchModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition"
+                >
+                  Batal
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleProcessBatch}
+                  disabled={batchItems.length === 0 || isBatchProcessing}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-40 text-white font-bold text-xs transition flex items-center gap-2 shadow-xs"
+                >
+                  <Play className={`w-4 h-4 ${isBatchProcessing ? 'animate-spin' : ''}`} />
+                  <span>
+                    {isBatchProcessing 
+                      ? 'Sedang Memproses 150 Data dengan SMART...' 
+                      : `Proses & Hitung ${batchItems.length > 0 ? `${batchItems.length} Data` : '150 Data'} dengan SMART`}
+                  </span>
+                </button>
+              </div>
+
+            </div>
           </div>
         </div>
       )}

@@ -97,21 +97,21 @@ const MainLayout: React.FC = () => {
         /* RENDER FRAME 1: OPERASIONAL KOPERASI (3 ROLE PENGGUNA) */
         <>
           {/* Secondary Sub-Navbar for Navigation */}
-          <div className="bg-white border-b border-slate-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2 overflow-x-auto py-2 text-xs font-semibold">
+          <div className="bg-white border-b border-slate-200/80 shadow-xs">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 overflow-x-auto py-2.5 text-xs">
 
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 {/* Portal Permohonan Pinjaman Tab (Khusus Anggota) */}
                 {user.role === 'anggota' && (
                   <button
                     onClick={() => setActiveTab('member_portal')}
-                    className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition ${
+                    className={`px-4 py-2 rounded-xl flex items-center gap-2 transition font-semibold ${
                       activeTab === 'member_portal' || (activeTab === 'dashboard' && user.role === 'anggota') 
-                        ? 'bg-slate-900 text-white shadow-xs' 
+                        ? 'bg-emerald-600 text-white shadow-xs' 
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
-                    <CreditCard className="w-3.5 h-3.5" />
+                    <CreditCard className="w-4 h-4" />
                     <span>Portal Anggota</span>
                   </button>
                 )}
@@ -120,14 +120,14 @@ const MainLayout: React.FC = () => {
                 {user.role === 'petugas_simpin' && (
                   <button
                     onClick={() => setActiveTab('admin_engine')}
-                    className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition ${
+                    className={`px-4 py-2 rounded-xl flex items-center gap-2 transition font-semibold ${
                       activeTab === 'admin_engine' || (activeTab === 'dashboard' && user.role === 'petugas_simpin') 
-                        ? 'bg-slate-900 text-white shadow-xs' 
+                        ? 'bg-emerald-600 text-white shadow-xs' 
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
-                    <Cpu className="w-3.5 h-3.5" />
-                    <span>Verifikasi &amp; Scoring SPK</span>
+                    <Cpu className="w-4 h-4" />
+                    <span>Verifikasi & Scoring SPK</span>
                   </button>
                 )}
 
@@ -135,13 +135,13 @@ const MainLayout: React.FC = () => {
                 {user.role === 'petugas_simpin' && (
                   <button
                     onClick={() => setActiveTab('criteria_master')}
-                    className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition ${
+                    className={`px-4 py-2 rounded-xl flex items-center gap-2 transition font-semibold ${
                       activeTab === 'criteria_master' 
-                        ? 'bg-slate-900 text-white shadow-xs' 
+                        ? 'bg-emerald-600 text-white shadow-xs' 
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
-                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <SlidersHorizontal className="w-4 h-4" />
                     <span>Master Kriteria</span>
                   </button>
                 )}
@@ -150,14 +150,14 @@ const MainLayout: React.FC = () => {
                 {user.role === 'ketua_koperasi' && (
                   <button
                     onClick={() => setActiveTab('chairman_approval')}
-                    className={`px-3.5 py-1.5 rounded-lg flex items-center gap-2 transition ${
+                    className={`px-4 py-2 rounded-xl flex items-center gap-2 transition font-semibold ${
                       activeTab === 'chairman_approval' || (activeTab === 'dashboard' && user.role === 'ketua_koperasi') 
-                        ? 'bg-slate-900 text-white shadow-xs' 
+                        ? 'bg-emerald-600 text-white shadow-xs' 
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
-                    <Award className="w-3.5 h-3.5" />
-                    <span>Otorisasi &amp; Approval</span>
+                    <Award className="w-4 h-4" />
+                    <span>Otorisasi & Approval</span>
                   </button>
                 )}
               </div>
@@ -166,7 +166,7 @@ const MainLayout: React.FC = () => {
               {isStaff && (
                 <button
                   onClick={() => setCurrentFrame('lab_riset')}
-                  className="px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition font-bold shrink-0 ml-auto"
+                  className="px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 transition font-semibold shrink-0 ml-auto"
                   title="Buka interface simulasi perhitungan SMART untuk pengujian penelitian"
                 >
                   <FlaskConical className="w-3.5 h-3.5 text-emerald-600" />
@@ -192,13 +192,14 @@ const MainLayout: React.FC = () => {
         </>
       )}
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p>© 2026 <strong>Koperasi Karyawan Al-Azhar BSD</strong> — SPK Kelayakan Kredit Metode SMART</p>
-          <p className="text-[11px] font-medium text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-            Arsitektur: Fullstack Next.js Monolith + TypeScript + Multi-Level User Role
-          </p>
+      {/* Corporate Consulting Footer */}
+      <footer className="bg-white border-t border-slate-200 py-6 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p>© 2026 <strong>Koperasi Konsumen Karyawan Al-Azhar BSD</strong> — Hak Cipta Dilindungi.</p>
+          <div className="flex items-center gap-2 text-[11px] font-medium text-slate-600 bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Terproteksi e-SK QR Code Digital Signature</span>
+          </div>
         </div>
       </footer>
 

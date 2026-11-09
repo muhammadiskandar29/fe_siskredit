@@ -12,7 +12,7 @@ export const StatusBadge: React.FC<Props> = ({ status }) => {
     case 'disbursed':
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white shadow-xs">
-          <DollarSign className="w-3.5 h-3.5 text-gold-300" />
+          <DollarSign className="w-3.5 h-3.5 text-amber-300" />
           Dana Telah Cair (Disbursed)
         </span>
       );

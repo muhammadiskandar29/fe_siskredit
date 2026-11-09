@@ -60,10 +60,10 @@ export const RegisterMemberModal: React.FC<Props> = ({ isOpen, onClose, onSucces
       <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
         
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-emerald-800 to-kopkar-900 text-white p-5 flex justify-between items-center">
+        <div className="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-5 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white shadow-md">
-              <UserPlus className="w-5 h-5 text-gold-300" />
+              <UserPlus className="w-5 h-5 text-emerald-200" />
             </div>
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-300 block">

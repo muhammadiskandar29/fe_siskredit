@@ -148,7 +148,7 @@ export const NotificationDropdown: React.FC<Props> = ({ onNavigate }) => {
       case 'installment':
         return <CreditCard className="w-4 h-4 text-emerald-600 shrink-0" />;
       case 'loan':
-        return <Sparkles className="w-4 h-4 text-gold-500 shrink-0" />;
+        return <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />;
       default:
         return <FileText className="w-4 h-4 text-emerald-600 shrink-0" />;
     }
@@ -175,7 +175,7 @@ export const NotificationDropdown: React.FC<Props> = ({ onNavigate }) => {
         <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
           
           {/* Header */}
-          <div className="bg-gradient-to-r from-slate-900 via-kopkar-950 to-slate-900 text-white p-4 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 text-white p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-emerald-400" />
               <h4 className="font-extrabold text-xs tracking-tight">Pemberitahuan Realtime</h4>

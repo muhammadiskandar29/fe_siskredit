@@ -246,19 +246,19 @@ export const MemberDashboard: React.FC = () => {
             {loans.map((loan) => (
               <div
                 key={loan.id}
-                className="p-6 rounded-3xl border border-slate-200 hover:border-kopkar-300 hover:shadow-lg transition bg-white space-y-5"
+                className="p-6 sm:p-7 rounded-2xl border border-slate-200 hover:border-emerald-500/50 hover:shadow-lg transition bg-white space-y-6"
               >
                 {/* Header Row */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-xs text-kopkar-800 bg-kopkar-50 px-2.5 py-0.5 rounded-md border border-kopkar-200">
+                      <span className="font-mono font-bold text-xs text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
                         {loan.application_number}
                       </span>
                       <StatusBadge status={loan.status} />
                     </div>
 
-                    <h4 className="font-black text-xl text-slate-900">
+                    <h4 className="font-extrabold text-2xl text-slate-900 tracking-tight">
                       {formatCurrency(loan.approved_nominal || loan.nominal_pengajuan)}
                       <span className="text-xs font-semibold text-slate-500 ml-2">
                         / {loan.approved_tenor || loan.tenor_bulan} Bulan
@@ -266,7 +266,7 @@ export const MemberDashboard: React.FC = () => {
                     </h4>
 
                     <p className="text-xs text-slate-600">
-                      <span className="font-semibold text-slate-500">Keperluan:</span> {loan.keperluan_pinjaman}
+                      <span className="font-semibold text-slate-500">Tujuan Pinjaman:</span> {loan.keperluan_pinjaman || (loan as any).tujuan_pinjaman || 'Keperluan Konsumtif / Pendidikan'}
                     </p>
                   </div>
 
@@ -275,26 +275,26 @@ export const MemberDashboard: React.FC = () => {
                     {['approved', 'disbursed'].includes(loan.status) && (
                       <button
                         onClick={() => setSelectedLoanForInstallments(loan.id)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs border border-slate-300 shadow-xs transition"
                       >
-                        <Calendar className="w-4 h-4 text-gold-300" />
-                        <span>Jadwal &amp; Tagihan Angsuran</span>
+                        <Calendar className="w-4 h-4 text-emerald-700" />
+                        <span>Jadwal & Tagihan Angsuran</span>
                       </button>
                     )}
 
                     {['approved', 'disbursed'].includes(loan.status) ? (
                       <button
                         onClick={() => setSelectedLoanForLetter(loan)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-kopkar-800 hover:bg-kopkar-700 text-white font-bold text-xs shadow-md transition"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm hover:shadow transition"
                       >
-                        <Download className="w-4 h-4 text-gold-300" />
+                        <Download className="w-4 h-4 text-white" />
                         <span>Unduh e-SK (PDF)</span>
                       </button>
                     ) : (
                       <button
                         disabled
                         title="e-SK akan terbit otomatis setelah disetujui resmi oleh Ketua Koperasi"
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed border border-slate-200"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 text-slate-400 font-medium text-xs cursor-not-allowed border border-slate-200"
                       >
                         <Download className="w-4 h-4 text-slate-300" />
                         <span>e-SK Belum Terbit</span>
@@ -303,122 +303,125 @@ export const MemberDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 4-STAGE USER-FRIENDLY TIMELINE */}
-                <div className="pt-4 border-t border-slate-100 space-y-2">
-                  <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
-                    Progres Permohonan Anda:
-                  </span>
+                {/* 4-STAGE MODERN FINTECH TIMELINE */}
+                <div className="pt-5 border-t border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Tracking Status Permohonan:
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      4 Tahapan Transparan
+                    </span>
+                  </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                     
                     {/* Stage 1: Pengajuan */}
-                    <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-1">
-                      <div className="flex items-center gap-1.5 text-emerald-800 font-extrabold text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200/90 space-y-1">
+                      <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-xs">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                         <span>1. Permohonan Masuk</span>
                       </div>
-                      <p className="text-[10px] text-slate-500">{formatDate(loan.created_at)}</p>
-                      <p className="text-[10px] text-slate-700 font-medium">Formulir &amp; berkas diterima</p>
+                      <p className="text-[11px] text-slate-500 font-medium">{formatDate(loan.created_at)}</p>
+                      <p className="text-[11px] text-emerald-800 font-semibold">Formulir & berkas diterima</p>
                     </div>
 
-                    {/* Stage 2: Pengecekan Berkas oleh Petugas */}
-                    <div className={`p-3 rounded-2xl border space-y-1 ${
+                    {/* Stage 2: Pengecekan Berkas */}
+                    <div className={`p-3.5 rounded-xl border space-y-1 ${
                       ['verified', 'smart_calculated', 'forwarded_to_chairman', 'approved', 'disbursed'].includes(loan.status)
-                        ? 'bg-emerald-50/80 border-emerald-200'
+                        ? 'bg-emerald-50 border-emerald-200/90'
                         : loan.status === 'revision_required'
                         ? 'bg-amber-50 border-amber-300'
-                        : 'bg-slate-50 border-slate-200 opacity-60'
+                        : 'bg-slate-50 border-slate-200'
                     }`}>
-                      <div className="flex items-center gap-1.5 font-extrabold text-[11px] text-slate-800">
+                      <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
                         {['verified', 'smart_calculated', 'forwarded_to_chairman', 'approved', 'disbursed'].includes(loan.status) ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                         ) : loan.status === 'revision_required' ? (
-                          <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
                         ) : (
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <Clock className="w-4 h-4 text-slate-400 shrink-0" />
                         )}
                         <span>2. Pengecekan Berkas</span>
                       </div>
-                      <p className="text-[10px] text-slate-500">{formatDate(loan.verified_at)}</p>
-                      <p className="text-[10px] text-slate-700 font-medium">
+                      <p className="text-[11px] text-slate-500 font-medium">{formatDate(loan.verified_at)}</p>
+                      <p className="text-[11px] font-medium text-slate-700">
                         {loan.status === 'revision_required'
-                          ? '⚠️ Harap lengkapi berkas'
+                          ? '⚠️ Harap perbaiki dokumen'
                           : loan.verified_at
                           ? 'Berkas dinyatakan lengkap'
-                          : 'Sedang diperiksa petugas'
+                          : 'Sedang diperiksa tim simpin'
                         }
                       </p>
                     </div>
 
-                    {/* Stage 3: Review & Keputusan Ketua (Gabungan SMART + forward + approved/rejected) */}
-                    <div className={`p-3 rounded-2xl border space-y-1 ${
+                    {/* Stage 3: Review & Keputusan Ketua */}
+                    <div className={`p-3.5 rounded-xl border space-y-1 ${
                       ['approved', 'disbursed'].includes(loan.status)
-                        ? 'bg-emerald-50/80 border-emerald-200'
+                        ? 'bg-emerald-50 border-emerald-200/90'
                         : loan.status === 'rejected'
                         ? 'bg-rose-50 border-rose-200'
                         : ['smart_calculated', 'forwarded_to_chairman'].includes(loan.status)
                         ? 'bg-blue-50 border-blue-200'
-                        : 'bg-slate-50 border-slate-200 opacity-60'
+                        : 'bg-slate-50 border-slate-200'
                     }`}>
-                      <div className="flex items-center gap-1.5 font-extrabold text-[11px] text-slate-800">
+                      <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
                         {['approved', 'disbursed'].includes(loan.status) ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                         ) : loan.status === 'rejected' ? (
-                          <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                         ) : ['smart_calculated', 'forwarded_to_chairman'].includes(loan.status) ? (
-                          <Clock className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
+                          <Clock className="w-4 h-4 text-blue-500 animate-pulse shrink-0" />
                         ) : (
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <Clock className="w-4 h-4 text-slate-400 shrink-0" />
                         )}
-                        <span>3. Review &amp; Keputusan</span>
+                        <span>3. Keputusan Ketua</span>
                       </div>
-                      <p className="text-[10px] text-slate-500">{formatDate(loan.approved_at)}</p>
-                      <p className={`text-[10px] font-medium ${
-                        loan.status === 'rejected' ? 'text-rose-700' :
-                        ['smart_calculated', 'forwarded_to_chairman'].includes(loan.status) ? 'text-blue-700' :
-                        loan.status === 'approved' || loan.status === 'disbursed' ? 'text-emerald-800 font-bold' :
-                        'text-slate-600'
-                      }`}>
-                        {loan.status === 'rejected'
-                          ? 'Tidak disetujui'
-                          : ['approved', 'disbursed'].includes(loan.status)
-                          ? '✓ Disetujui Ketua Koperasi'
+                      <p className="text-[11px] text-slate-500 font-medium">{formatDate(loan.approved_at || (loan as any).updated_at || loan.created_at)}</p>
+                      <p className="text-[11px] font-medium text-slate-700">
+                        {loan.status === 'approved' || loan.status === 'disbursed'
+                          ? 'Disetujui Ketua Koperasi'
+                          : loan.status === 'rejected'
+                          ? 'Permohonan Ditolak'
                           : ['smart_calculated', 'forwarded_to_chairman'].includes(loan.status)
-                          ? 'Sedang diproses ketua'
-                          : 'Menunggu proses'
+                          ? 'Menunggu Otorisasi Ketua'
+                          : 'Belum dievaluasi'
                         }
                       </p>
                     </div>
 
                     {/* Stage 4: Pencairan Dana */}
-                    <div className={`p-3 rounded-2xl border space-y-1 ${
+                    <div className={`p-3.5 rounded-xl border space-y-1 ${
                       loan.status === 'disbursed'
-                        ? 'bg-emerald-600 border-emerald-700 shadow-sm'
-                        : 'bg-slate-50 border-slate-200 opacity-60'
+                        ? 'bg-emerald-50 border-emerald-200/90'
+                        : 'bg-slate-50 border-slate-200'
                     }`}>
-                      <div className={`flex items-center gap-1.5 font-extrabold text-[11px] ${loan.status === 'disbursed' ? 'text-white' : 'text-slate-800'}`}>
+                      <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900">
                         {loan.status === 'disbursed' ? (
-                          <DollarSign className="w-3.5 h-3.5 text-yellow-300" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                         ) : (
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <Clock className="w-4 h-4 text-slate-400 shrink-0" />
                         )}
-                        <span>4. Pencairan Dana</span>
+                        <span>4. Penyaluran Dana</span>
                       </div>
-                      <p className={`text-[10px] ${loan.status === 'disbursed' ? 'text-emerald-100' : 'text-slate-500'}`}>
-                        {formatDate(loan.disbursed_at)}
-                      </p>
-                      <p className={`text-[10px] font-medium ${loan.status === 'disbursed' ? 'text-emerald-50' : 'text-slate-600'}`}>
-                        {loan.status === 'disbursed' ? 'Dana telah masuk rekening' : 'Menunggu pencairan'}
+                      <p className="text-[11px] text-slate-500 font-medium">{formatDate(loan.disbursed_at)}</p>
+                      <p className="text-[11px] font-medium text-slate-700">
+                        {loan.status === 'disbursed'
+                          ? 'Dana telah masuk rekening'
+                          : loan.status === 'approved'
+                          ? 'Antrean proses transfer'
+                          : 'Menunggu persetujuan'
+                        }
                       </p>
                     </div>
-
                   </div>
                 </div>
 
                 {/* Detail Permohonan — Collapsible, user-friendly (NO SMART jargon) */}
-                <details className="pt-3 border-t border-slate-100">
-                  <summary className="text-[11px] font-bold text-kopkar-800 cursor-pointer select-none hover:underline flex items-center gap-1">
-                    <FileText className="w-3.5 h-3.5" /> Lihat Detail Permohonan
+                <details className="pt-3 border-t border-slate-100 group">
+                  <summary className="text-xs font-semibold text-emerald-800 cursor-pointer select-none hover:text-emerald-900 flex items-center gap-1.5 transition">
+                    <FileText className="w-4 h-4 text-emerald-600" />
+                    <span>Lihat Detail Ringkasan Permohonan</span>
                   </summary>
                   <div className="mt-3 space-y-2 text-xs">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -517,25 +520,30 @@ export const MemberDashboard: React.FC = () => {
       {/* MODAL FORMULIR PENGAJUAN PINJAMAN ANGGOTA */}
       {/* ========================================== */}
       {showModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-200">
-            <div className="kopkar-gradient p-6 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-200">
+            <div className="bg-gradient-to-r from-emerald-800 to-emerald-950 p-6 text-white flex justify-between items-start border-b border-emerald-700/40">
               <div>
-                <span className="bg-white/20 text-emerald-100 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">Formulir Permohonan</span>
-                <h3 className="font-extrabold text-lg mt-0.5">Pengajuan Pinjaman Koperasi</h3>
-                <p className="text-xs text-emerald-200">Isi data pinjaman dan lampirkan berkas persyaratan Anda</p>
+                <span className="bg-emerald-700 text-emerald-100 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-block mb-1.5">
+                  Formulir Permohonan
+                </span>
+                <h3 className="font-bold text-lg text-white">Pengajuan Pinjaman Koperasi</h3>
+                <p className="text-xs text-emerald-200/90 font-medium">Lengkapi parameter pengajuan dan unggah slip gaji Anda</p>
               </div>
-              <button onClick={() => setShowModal(false)} className="text-white/80 hover:text-white text-lg font-bold">
+              <button 
+                onClick={() => setShowModal(false)} 
+                className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition text-sm"
+              >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleApply} className="p-6 space-y-4 text-xs max-h-[82vh] overflow-y-auto">
+            <form onSubmit={handleApply} className="p-6 space-y-5 text-xs max-h-[82vh] overflow-y-auto">
               
               {/* Section 1: Rencana Pinjaman */}
               <div className="space-y-3">
-                <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5 text-kopkar-800">
-                  <CreditCard className="w-4 h-4" /> 1. Rencana Pinjaman (Plafon &amp; Tenor)
+                <h4 className="font-bold text-emerald-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <CreditCard className="w-4 h-4 text-emerald-600" /> 1. Rencana Pinjaman (Plafon & Tenor)
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -600,10 +608,10 @@ export const MemberDashboard: React.FC = () => {
                 </div>
 
                 {/* Realtime Live Simulation Output (1% flat per month) */}
-                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-950 via-kopkar-900 to-slate-900 text-white space-y-2.5 shadow-md border border-emerald-500/30">
+                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 text-white space-y-2.5 shadow-md border border-emerald-500/30">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-300 flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5 text-gold-300 animate-pulse" /> Simulasi Angsuran (Bunga 1%/bln Flat)
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" /> Simulasi Angsuran (Bunga 1%/bln Flat)
                     </span>
                     <span className="bg-white/20 text-[10px] font-mono font-bold px-2 py-0.5 rounded text-white">
                       {tenor} Bulan
@@ -619,9 +627,9 @@ export const MemberDashboard: React.FC = () => {
                       <span className="text-emerald-200 block text-[9px] uppercase font-bold">Total Pengembalian</span>
                       <span className="font-bold text-white text-[11px]">{formatCurrency(nominal + (nominal * 0.01 * tenor))}</span>
                     </div>
-                    <div className="bg-gold-500/20 border border-gold-400/40 p-2 rounded-xl backdrop-blur-sm">
-                      <span className="text-gold-300 block text-[9px] uppercase font-bold">Angsuran / Bulan</span>
-                      <span className="font-black text-gold-200 text-xs">
+                    <div className="bg-amber-500/20 border border-amber-400/40 p-2 rounded-xl backdrop-blur-sm">
+                      <span className="text-amber-300 block text-[9px] uppercase font-bold">Angsuran / Bulan</span>
+                      <span className="font-black text-amber-200 text-xs">
                         {formatCurrency(Math.ceil((nominal + (nominal * 0.01 * tenor)) / tenor))}
                       </span>
                     </div>
@@ -635,7 +643,7 @@ export const MemberDashboard: React.FC = () => {
                       {Array.from({ length: tenor }).map((_, idx) => (
                         <div key={idx} className="flex justify-between items-center bg-white/10 px-2.5 py-1 rounded text-[10px] font-mono">
                           <span>Bulan ke-{idx + 1}</span>
-                          <span className="font-bold text-gold-200">
+                          <span className="font-bold text-amber-200">
                             {formatCurrency(Math.ceil((nominal + (nominal * 0.01 * tenor)) / tenor))}
                           </span>
                         </div>
@@ -661,8 +669,8 @@ export const MemberDashboard: React.FC = () => {
 
               {/* Section 2: Rekening Bank Muamalat */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
-                <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5 text-kopkar-800">
-                  <Building className="w-4 h-4" /> 2. Rekening Bank Muamalat (Pencairan Dana)
+                <h4 className="font-extrabold text-xs uppercase tracking-wider flex items-center gap-1.5 text-emerald-900">
+                  <Building className="w-4 h-4 text-emerald-600" /> 2. Rekening Bank Muamalat (Pencairan Dana)
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -691,8 +699,8 @@ export const MemberDashboard: React.FC = () => {
 
               {/* Section 3: Upload 4 Berkas Persyaratan (Real Base64) */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
-                <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5 text-kopkar-800">
-                  <UploadCloud className="w-4 h-4" /> 3. Unggah Berkas Persyaratan Asli (PDF/JPG)
+                <h4 className="font-extrabold text-xs uppercase tracking-wider flex items-center gap-1.5 text-emerald-900">
+                  <UploadCloud className="w-4 h-4 text-emerald-600" /> 3. Unggah Berkas Persyaratan Asli (PDF/JPG)
                 </h4>
 
                 <div className="space-y-2.5">
@@ -774,20 +782,20 @@ export const MemberDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+              <div className="pt-4 border-t border-slate-200 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50"
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-xl kopkar-gradient text-white font-extrabold shadow-md hover:opacity-95 disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition disabled:opacity-50 flex items-center gap-2"
                 >
-                  {isSubmitting ? 'Mengirim...' : 'Kirim Permohonan Pinjaman'}
+                  <span>{isSubmitting ? 'Mengirim...' : 'Kirim Permohonan Pinjaman'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>

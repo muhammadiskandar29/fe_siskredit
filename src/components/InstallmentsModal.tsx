@@ -188,7 +188,7 @@ export const InstallmentsModal: React.FC<Props> = ({
         <div className="bg-slate-900 text-white p-5 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white font-extrabold shadow-md">
-              <Calendar className="w-5 h-5 text-gold-300" />
+              <Calendar className="w-5 h-5 text-amber-300" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -196,7 +196,7 @@ export const InstallmentsModal: React.FC<Props> = ({
                   {data?.application_number || 'Tagihan Kredit'}
                 </span>
                 {isFullyPaid && (
-                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-gold-500/30 text-gold-300 rounded border border-gold-500/30">
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">
                     ✓ LUNAS KESELURUHAN
                   </span>
                 )}
@@ -367,7 +367,7 @@ export const InstallmentsModal: React.FC<Props> = ({
                                 }}
                                 className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[10px] shadow-xs transition"
                               >
-                                <UploadCloud className="w-3 h-3 text-gold-300" />
+                                <UploadCloud className="w-3 h-3 text-white" />
                                 {inst.status === 'menunggu_konfirmasi' ? 'Ganti Bukti' : 'Bayar'}
                               </button>
                             )}

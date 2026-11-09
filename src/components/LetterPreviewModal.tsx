@@ -180,7 +180,7 @@ export const LetterPreviewModal: React.FC<Props> = ({ isOpen, onClose, loan }) =
 
             <button
               onClick={() => window.print()}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-kopkar-700 hover:bg-kopkar-600 text-white font-extrabold text-xs shadow-md transition"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition"
             >
               <Printer className="w-3.5 h-3.5" />
               Cetak / PDF

@@ -361,35 +361,39 @@ export const ChairmanDashboard: React.FC = () => {
               return (
                 <div
                   key={loan.id}
-                  className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-kopkar-300 transition space-y-4"
+                  className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-emerald-300 transition space-y-4"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-xs text-kopkar-800 bg-kopkar-50 px-2 py-0.5 rounded">
+                        <span className="font-mono font-bold text-xs text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
                           {loan.application_number}
                         </span>
                         <StatusBadge status={loan.status} />
                       </div>
 
-                      <h4 className="font-extrabold text-base text-slate-900">
-                        {loan.user?.name} — <span className="text-emerald-900 font-black">{formatCurrency(loan.approved_nominal || loan.nominal_pengajuan)}</span>
+                      <h4 className="font-bold text-base text-slate-900">
+                        {loan.user?.name} — <span className="text-emerald-700 font-extrabold">{formatCurrency(loan.approved_nominal || loan.nominal_pengajuan)}</span>
                       </h4>
 
-                      <p className="text-xs text-slate-500 font-medium">
-                        Rekening: <span className="font-mono font-bold text-slate-800">{loan.no_rekening_muamalat}</span> (a.n. {loan.nama_rekening})
+                      <p className="text-xs text-slate-600 font-medium flex items-center gap-2">
+                        <span>Rekening Bank Muamalat:</span>
+                        <span className="font-mono font-bold text-slate-900 bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200">
+                          {loan.no_rekening_muamalat || loan.user?.no_rekening_muamalat || '-'}
+                        </span>
+                        <span>(a.n. {loan.nama_rekening || loan.user?.nama_rekening || loan.user?.name || '-'})</span>
                       </p>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      {/* View Installments Read-Only */}
+                      {/* View Installments */}
                       {canViewLetter && (
                         <button
                           onClick={() => setSelectedLoanForInstallments(loan.id)}
-                          className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5"
-                          title="Lihat Status &amp; Jadwal Angsuran"
+                          className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs border border-slate-300/80 shadow-xs transition flex items-center gap-1.5"
+                          title="Lihat Status & Jadwal Angsuran"
                         >
-                          <Calendar className="w-4 h-4 text-yellow-300" />
+                          <Calendar className="w-4 h-4 text-emerald-700" />
                           <span>Cek Angsuran</span>
                         </button>
                       )}
@@ -398,16 +402,16 @@ export const ChairmanDashboard: React.FC = () => {
                       {canViewLetter ? (
                         <button
                           onClick={() => setSelectedLoanForLetter(loan)}
-                          className="px-4 py-2 rounded-xl bg-kopkar-800 hover:bg-kopkar-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5"
+                          className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm hover:shadow transition flex items-center gap-1.5"
                         >
-                          <Download className="w-4 h-4 text-gold-300" />
+                          <Download className="w-4 h-4 text-white" />
                           <span>Lihat e-SK Resmi</span>
                         </button>
                       ) : (
                         <button
                           disabled
                           title="e-SK belum terbit (Menunggu Approval)"
-                          className="px-4 py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed border border-slate-200 flex items-center gap-1.5"
+                          className="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-400 font-medium text-xs cursor-not-allowed border border-slate-200 flex items-center gap-1.5"
                         >
                           <Lock className="w-3.5 h-3.5" />
                           <span>e-SK Belum Terbit</span>
@@ -416,23 +420,23 @@ export const ChairmanDashboard: React.FC = () => {
 
                       {/* Disburse Button with Strict Rule */}
                       {isDisbursed ? (
-                        <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-800 font-extrabold text-xs border border-emerald-300 flex items-center gap-1.5">
+                        <span className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200 flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                           <span>Dana Telah Dicairkan</span>
                         </span>
                       ) : canDisburse ? (
                         <button
                           onClick={() => handleOpenDisburseModal(loan)}
-                          className="px-5 py-2 rounded-xl kopkar-gradient text-white font-extrabold text-xs shadow-md hover:opacity-95 transition flex items-center gap-1.5"
+                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm hover:shadow active:scale-[0.98] transition flex items-center gap-1.5"
                         >
-                          <DollarSign className="w-4 h-4 text-gold-300" />
+                          <DollarSign className="w-4 h-4 text-emerald-100" />
                           <span>Konfirmasi Pencairan Dana</span>
                         </button>
                       ) : (
                         <button
                           disabled
                           title="Permohonan harus di-Approve terlebih dahulu sebelum dana dapat dicairkan!"
-                          className="px-4 py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed border border-slate-200 flex items-center gap-1.5"
+                          className="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-400 font-medium text-xs cursor-not-allowed border border-slate-200 flex items-center gap-1.5"
                         >
                           <Lock className="w-3.5 h-3.5" />
                           <span>Menunggu Approval Ketua</span>
@@ -469,29 +473,51 @@ export const ChairmanDashboard: React.FC = () => {
       {/* MODAL 1: APPROVAL / REJECTION DECISION */}
       {/* ========================================== */}
       {selectedLoanForDecision && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
-            <div className={`p-6 text-white flex justify-between items-center ${
-              decisionType === 'approved' ? 'kopkar-gradient' : 'bg-gradient-to-r from-rose-800 to-rose-950'
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+            <div className={`p-6 text-white flex justify-between items-start ${
+              decisionType === 'approved' 
+                ? 'bg-gradient-to-r from-emerald-800 to-emerald-950 border-b border-emerald-700/40' 
+                : 'bg-gradient-to-r from-rose-800 to-rose-950 border-b border-rose-700/40'
             }`}>
               <div>
-                <h3 className="font-extrabold text-lg">
+                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-block mb-1.5 ${
+                  decisionType === 'approved' ? 'bg-emerald-700 text-emerald-100' : 'bg-rose-700 text-rose-100'
+                }`}>
+                  {decisionType === 'approved' ? 'Otorisasi Persetujuan' : 'Keputusan Penolakan'}
+                </span>
+                <h3 className="font-bold text-lg text-white">
                   {decisionType === 'approved' ? 'Persetujuan Otorisasi Kredit (Approval)' : 'Penolakan Permohonan Kredit'}
                 </h3>
-                <p className="text-xs text-white/80">{selectedLoanForDecision.application_number} - {selectedLoanForDecision.user?.name}</p>
+                <p className="text-xs text-white/80 mt-0.5 font-medium">
+                  {selectedLoanForDecision.application_number} — {selectedLoanForDecision.user?.name}
+                </p>
               </div>
-              <button onClick={() => setSelectedLoanForDecision(null)} className="text-white/80 hover:text-white font-bold">✕</button>
+              <button 
+                onClick={() => setSelectedLoanForDecision(null)} 
+                className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition text-sm"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleDecisionSubmit} className="p-6 space-y-4 text-xs">
               {decisionType === 'approved' ? (
                 <>
-                  <div className="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200 text-emerald-900 font-medium">
-                    Persetujuan ini akan otomatis menerbitkan <strong>Surat Keputusan Persetujuan Pinjaman (e-SK)</strong> resmi dengan Barcode QR Code Digital Signature.
+                  <div className="bg-emerald-50/90 p-4 rounded-xl border border-emerald-200 text-emerald-900 font-medium space-y-1">
+                    <p className="font-bold flex items-center gap-1.5 text-xs text-emerald-950">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      Penerbitan Surat Keputusan (e-SK Resmi):
+                    </p>
+                    <p className="text-[11px] text-slate-700 leading-relaxed">
+                      Persetujuan ini akan otomatis menerbitkan <strong>Surat Keputusan Persetujuan Pinjaman (e-SK)</strong> resmi dengan Barcode QR Code Digital Signature.
+                    </p>
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 uppercase mb-1">Nominal Plafon Disetujui (Rp)</label>
+                    <label className="block font-semibold text-slate-700 mb-1.5">
+                      Nominal Plafon Disetujui (Rp)
+                    </label>
                     <div className="relative">
                       <span className="absolute left-3 top-2.5 font-bold text-slate-400 text-sm">Rp</span>
                       <input
@@ -503,20 +529,20 @@ export const ChairmanDashboard: React.FC = () => {
                           const val = raw ? Math.min(Number(raw), 20000000) : 0;
                           setApprovedNominal(val);
                         }}
-                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm font-black text-emerald-950 bg-slate-50/50 focus:bg-white"
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-emerald-950 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                       />
                     </div>
-                    <span className="text-[10px] font-extrabold text-emerald-700 mt-1 block">
+                    <span className="text-[11px] font-semibold text-emerald-700 mt-1 block">
                       Terbilang: {formatCurrency(approvedNominal)}
                     </span>
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 uppercase mb-1">Tenor Disetujui</label>
+                    <label className="block font-semibold text-slate-700 mb-1.5">Tenor Disetujui</label>
                     <select
                       value={approvedTenor}
                       onChange={(e) => setApprovedTenor(Number(e.target.value))}
-                      className="w-full p-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800"
+                      className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                     >
                       <option value={6}>6 Bulan</option>
                       <option value={10}>10 Bulan</option>
@@ -527,38 +553,40 @@ export const ChairmanDashboard: React.FC = () => {
                   </div>
                 </>
               ) : (
-                <div className="bg-rose-50 p-3.5 rounded-2xl border border-rose-200 text-rose-900 font-medium">
-                  Permohonan akan berstatus <strong>Ditolak</strong> dan alasan penolakan akan dicatat ke pemohon.
+                <div className="bg-rose-50 p-4 rounded-xl border border-rose-200 text-rose-900 font-medium text-xs leading-relaxed">
+                  Permohonan akan berstatus <strong>Ditolak</strong> dan catatan penolakan akan dicatat ke pemohon serta tercatat pada audit trail koperasi.
                 </div>
               )}
 
               <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">
-                  Catatan {decisionType === 'approved' ? 'Persetujuan' : 'Alasan Penolakan'}
+                <label className="block font-semibold text-slate-700 mb-1.5">
+                  Catatan {decisionType === 'approved' ? 'Persetujuan / Otorisasi' : 'Alasan Penolakan'}
                 </label>
                 <textarea
                   required
                   rows={3}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={decisionType === 'approved' ? 'Catatan otorisasi...' : 'Tuliskan alasan penolakan...'}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-sm"
+                  placeholder={decisionType === 'approved' ? 'Catatan otorisasi untuk staf simpan pinjam dan anggota...' : 'Tuliskan alasan penolakan secara jelas...'}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+              <div className="pt-4 border-t border-slate-200 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setSelectedLoanForDecision(null)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600"
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`px-6 py-2.5 rounded-xl text-white font-extrabold shadow-md transition disabled:opacity-50 ${
-                    decisionType === 'approved' ? 'kopkar-gradient hover:opacity-95' : 'bg-rose-700 hover:bg-rose-800'
+                  className={`px-5 py-2.5 rounded-xl text-white font-bold text-xs shadow-md transition disabled:opacity-50 flex items-center gap-1.5 ${
+                    decisionType === 'approved' 
+                      ? 'bg-emerald-600 hover:bg-emerald-700' 
+                      : 'bg-rose-600 hover:bg-rose-700'
                   }`}
                 >
                   {isSubmitting ? 'Memproses...' : decisionType === 'approved' ? 'Eksekusi Approval & Terbitkan e-SK' : 'Konfirmasi Penolakan'}
@@ -573,74 +601,95 @@ export const ChairmanDashboard: React.FC = () => {
       {/* MODAL 2: DISBURSEMENT / RELEASE DANA */}
       {/* ========================================== */}
       {selectedLoanForDisburse && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
-            <div className="kopkar-gradient p-6 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+            <div className="bg-gradient-to-r from-emerald-800 to-emerald-950 p-6 text-white flex justify-between items-start border-b border-emerald-700/40">
               <div>
-                <span className="bg-gold-500 text-slate-900 font-black text-[10px] px-2 py-0.5 rounded-full uppercase">
+                <span className="bg-emerald-700 text-emerald-100 font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-block mb-1.5">
                   Pencairan Dana
                 </span>
-                <h3 className="font-extrabold text-lg mt-1">Konfirmasi Penyaluran Uang</h3>
-                <p className="text-xs text-emerald-200">{selectedLoanForDisburse.application_number} - {selectedLoanForDisburse.user?.name}</p>
+                <h3 className="font-bold text-lg text-white">Konfirmasi Penyaluran Uang</h3>
+                <p className="text-xs text-emerald-200/90 font-medium">
+                  {selectedLoanForDisburse.application_number} — {selectedLoanForDisburse.user?.name}
+                </p>
               </div>
-              <button onClick={() => setSelectedLoanForDisburse(null)} className="text-white/80 hover:text-white font-bold">✕</button>
+              <button 
+                onClick={() => setSelectedLoanForDisburse(null)} 
+                className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition text-sm"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleDisburseSubmit} className="p-6 space-y-4 text-xs">
-              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-1">
-                <span className="text-emerald-800 font-bold block">Rekening Tujuan (Bank Muamalat):</span>
-                <div className="font-mono font-bold text-sm text-slate-900">{selectedLoanForDisburse.no_rekening_muamalat}</div>
-                <div className="text-slate-600 font-semibold">a.n. {selectedLoanForDisburse.nama_rekening}</div>
+              <div className="p-4 bg-emerald-50/90 rounded-xl border border-emerald-200/80 space-y-1.5">
+                <span className="text-emerald-900 font-bold text-xs flex items-center gap-1.5">
+                  <Building className="w-4 h-4 text-emerald-700" />
+                  Rekening Tujuan (Bank Muamalat):
+                </span>
+                <div className="font-mono font-bold text-base text-emerald-950 tracking-wide">
+                  {selectedLoanForDisburse.no_rekening_muamalat || selectedLoanForDisburse.user?.no_rekening_muamalat || '3910000280'}
+                </div>
+                <div className="text-slate-700 font-semibold text-xs">
+                  a.n. {selectedLoanForDisburse.nama_rekening || selectedLoanForDisburse.user?.nama_rekening || selectedLoanForDisburse.user?.name || 'Achmad Sobari'}
+                </div>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">Nomor Referensi Transfer / Resi</label>
+                <label className="block font-semibold text-slate-700 mb-1.5">
+                  Nomor Referensi Transfer / Resi
+                </label>
                 <input
                   type="text"
                   required
                   value={disburseRef}
                   onChange={(e) => setDisburseRef(e.target.value)}
-                  placeholder="Contoh: MUA-TRF-20260828001"
-                  className="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-slate-900"
+                  placeholder="Contoh: MUA-TRF-20261109-001"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 font-mono font-bold text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-white"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">Nominal yang Dicairkan (Rp)</label>
+                <label className="block font-semibold text-slate-700 mb-1.5">
+                  Nominal yang Dicairkan (Rp)
+                </label>
                 <input
                   type="number"
                   required
                   value={disburseAmount}
                   onChange={(e) => setDisburseAmount(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 font-bold text-emerald-900 text-sm"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-emerald-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-white"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">Catatan Pencairan</label>
+                <label className="block font-semibold text-slate-700 mb-1.5">
+                  Catatan Pencairan
+                </label>
                 <textarea
                   rows={2}
                   value={disburseNotes}
                   onChange={(e) => setDisburseNotes(e.target.value)}
-                  placeholder="Catatan transfer ke rekening anggota..."
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-sm"
+                  placeholder="Catatan transfer ke rekening Bank Muamalat anggota..."
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-white"
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+              <div className="pt-4 border-t border-slate-200 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setSelectedLoanForDisburse(null)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600"
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50 transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-xl kopkar-gradient text-white font-extrabold shadow-md hover:opacity-95 disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition disabled:opacity-50 flex items-center gap-1.5"
                 >
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan Konfirmasi Pencairan'}
+                  <DollarSign className="w-4 h-4 text-emerald-100" />
+                  <span>{isSubmitting ? 'Menyimpan...' : 'Konfirmasi & Cairkan Dana'}</span>
                 </button>
               </div>
             </form>

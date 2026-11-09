@@ -28,47 +28,47 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab, currentFrame,
   const isStaff = user?.role === 'petugas_simpin' || user?.role === 'ketua_koperasi';
 
   return (
-    <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-md">
+    <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-md backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center gap-4">
 
           {/* Brand Logo & Title */}
           <div className="flex items-center gap-3 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
-              A
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white font-black text-sm shadow-md ring-1 ring-white/20">
+              KA
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-white tracking-tight text-sm sm:text-base">
-                  KOPKAR <span className="text-emerald-400">AL-AZHAR BSD</span>
+                <span className="font-extrabold text-white tracking-tight text-sm sm:text-base">
+                  KOPKAR <span className="text-emerald-400 font-black">AL-AZHAR BSD</span>
                 </span>
-                <span className="bg-emerald-950 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded border border-emerald-800/80">
+                <span className="bg-emerald-950/80 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-800/80 tracking-wide uppercase">
                   SPK SMART
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
+              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
                 Sistem Penunjang Keputusan Kelayakan Kredit
               </p>
             </div>
           </div>
 
-          {/* Middle: Frame Selector (Operasional 3 Role vs Lab Riset Mahasiswa) */}
-          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+          {/* Middle: Frame Selector (Operasional 3 Role vs Lab Riset Simulasi) */}
+          <div className="flex items-center bg-slate-950/90 p-1 rounded-xl border border-slate-800 text-xs shadow-inner">
             <button
               onClick={() => setCurrentFrame('operasional')}
               className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition ${
                 currentFrame === 'operasional'
-                  ? 'bg-slate-800 text-white shadow-xs'
+                  ? 'bg-emerald-600 text-white shadow-xs'
                   : 'text-slate-400 hover:text-white'
               }`}
               title="Interface Operasional 3 User: Anggota, Petugas Simpin, dan Ketua Koperasi"
             >
-              <Building2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">Operasional (3 User)</span>
+              <Building2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Operasional Koperasi</span>
               <span className="sm:hidden">Operasional</span>
             </button>
 
-            {/* Lab Riset SPK: Pengujian Akademik Mahasiswa */}
+            {/* Lab Riset SPK: Simulasi Akademik */}
             {isStaff && (
               <button
                 onClick={() => setCurrentFrame('lab_riset')}
@@ -77,16 +77,16 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab, currentFrame,
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-400 hover:text-white'
                 }`}
-                title="Interface Simulasi Perhitungan SMART & Pengujian Akademik Mahasiswa"
+                title="Laboratorium Simulasi Komputasi SMART"
               >
                 <FlaskConical className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Lab Riset SPK (Simulasi)</span>
+                <span className="hidden sm:inline">Lab Riset SPK</span>
                 <span className="sm:hidden">Lab Riset</span>
               </button>
             )}
           </div>
 
-          {/* Right Side: Notification Dropdown + Quick Role Switcher + Profile */}
+          {/* Right Side: Notification Dropdown + Role Simulator + Profile */}
           <div className="flex items-center gap-3 shrink-0">
 
             {/* Realtime Notification Dropdown */}
@@ -110,30 +110,33 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab, currentFrame,
               }}
             />
 
-            {/* Quick Demo Role Switcher (Enabled in Operasional frame) */}
+            {/* Quick Demo Role Switcher */}
             {currentFrame === 'operasional' && (
-              <div className="hidden xl:flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
-                <span className="px-2 font-medium text-slate-400 text-[11px]">
-                  Role:
+              <div className="hidden lg:flex items-center bg-slate-950/90 p-1 rounded-xl border border-slate-800 text-xs">
+                <span className="px-2 text-slate-400 font-medium text-[11px]">
+                  Mode:
                 </span>
                 <button
                   onClick={() => switchRoleQuick('petugas_simpin')}
-                  className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${user?.role === 'petugas_simpin' ? 'bg-emerald-700 text-white shadow-xs' : 'text-slate-400 hover:text-white'
-                    }`}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                    user?.role === 'petugas_simpin' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  }`}
                 >
                   Petugas
                 </button>
                 <button
                   onClick={() => switchRoleQuick('ketua_koperasi')}
-                  className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${user?.role === 'ketua_koperasi' ? 'bg-emerald-700 text-white shadow-xs' : 'text-slate-400 hover:text-white'
-                    }`}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                    user?.role === 'ketua_koperasi' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  }`}
                 >
                   Ketua
                 </button>
                 <button
                   onClick={() => switchRoleQuick('anggota')}
-                  className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${user?.role === 'anggota' ? 'bg-emerald-700 text-white shadow-xs' : 'text-slate-400 hover:text-white'
-                    }`}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                    user?.role === 'anggota' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  }`}
                 >
                   Anggota
                 </button>
@@ -142,9 +145,14 @@ export const Navbar: React.FC<Props> = ({ activeTab, setActiveTab, currentFrame,
 
             {/* User Profile */}
             <div className="flex items-center gap-3 pl-3 border-l border-slate-800">
+              <div className="w-8 h-8 rounded-full bg-emerald-950 border border-emerald-700/80 text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </div>
               <div className="text-right hidden md:block">
-                <div className="font-semibold text-xs text-white leading-tight">{user?.name}</div>
-                <div className="text-[10px] font-medium text-emerald-400">
+                <div className="font-semibold text-xs text-white leading-tight truncate max-w-[160px]">
+                  {user?.name}
+                </div>
+                <div className="text-[10px] font-semibold text-emerald-400 mt-0.5">
                   {getRoleLabel(user?.role)}
                 </div>
               </div>

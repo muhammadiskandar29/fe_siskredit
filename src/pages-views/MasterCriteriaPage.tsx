@@ -223,26 +223,26 @@ export const MasterCriteriaPage: React.FC = () => {
     <div className="space-y-6">
       
       {/* Header Banner */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="bg-white rounded-2xl p-6 sm:p-7 shadow-xs border border-slate-200/90 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="bg-kopkar-100 text-kopkar-800 text-xs font-extrabold px-3 py-1 rounded-full border border-kopkar-300 flex items-center gap-1.5">
-              <Scale className="w-3.5 h-3.5 text-kopkar-800" />
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="bg-emerald-50 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
+              <Scale className="w-3.5 h-3.5 text-emerald-700" />
               Modul Master SPK Dinamis
             </span>
           </div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-            Master Kriteria &amp; Sub-Kriteria SMART
+          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            Master Kriteria & Sub-Kriteria SMART
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Kelola data kriteria, ubah bobot penilaian dengan normalisasi otomatis ($\sum w_j = 1.0$), serta sesuaikan parameter skala sub-kriteria secara fleksibel.
+          <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
+            Kelola parameter kriteria multi-atribut, ubah bobot penilaian dengan normalisasi otomatis ($\sum w_j = 1.0$), serta sesuaikan skala batas sub-kriteria.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={() => setIsWeightModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-sm transition"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs transition"
           >
             <Sliders className="w-4 h-4 text-slate-600" />
             <span>Normalisasi Bobot Cepat</span>
@@ -250,7 +250,7 @@ export const MasterCriteriaPage: React.FC = () => {
 
           <button
             onClick={handleOpenCreateCriterion}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl kopkar-gradient text-white font-extrabold text-xs shadow-md hover:opacity-95 transition"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm hover:shadow transition"
           >
             <PlusCircle className="w-4 h-4" />
             <span>+ Tambah Kriteria Baru</span>
@@ -265,7 +265,7 @@ export const MasterCriteriaPage: React.FC = () => {
             <span className="text-slate-400 block text-[11px]">Jumlah Kriteria Aktif</span>
             <span className="font-black text-2xl text-slate-900">{criteria.length} Kriteria</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-kopkar-50 border border-kopkar-200 flex items-center justify-center text-kopkar-800 font-bold">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-800 font-bold">
             <Layers className="w-5 h-5" />
           </div>
         </div>
@@ -306,23 +306,23 @@ export const MasterCriteriaPage: React.FC = () => {
         {criteria.map((c) => (
           <div 
             key={c.id} 
-            className="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200 hover:border-kopkar-300 hover:shadow-md transition space-y-5 flex flex-col justify-between"
+            className="bg-white rounded-2xl p-6 shadow-xs border border-slate-200 hover:border-emerald-500/50 hover:shadow-md transition space-y-5 flex flex-col justify-between"
           >
             <div className="space-y-4">
               
               {/* Card Header */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="font-black text-lg text-kopkar-800 bg-kopkar-50 px-3 py-1 rounded-xl border border-kopkar-200">
+                  <span className="font-mono font-bold text-base text-emerald-900 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">
                     {c.code}
                   </span>
                   <div>
-                    <h3 className="font-extrabold text-base text-slate-900 leading-snug">{c.name}</h3>
+                    <h3 className="font-bold text-base text-slate-900 leading-snug">{c.name}</h3>
                     <p className="text-[11px] text-slate-500 mt-0.5">{c.description || 'Tidak ada deskripsi'}</p>
                   </div>
                 </div>
 
-                <span className={`text-[10px] uppercase font-extrabold px-2.5 py-1 rounded-full border shrink-0 ${
+                <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full border shrink-0 ${
                   c.type === 'benefit' 
                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
                     : 'bg-rose-50 text-rose-800 border-rose-200'
@@ -333,26 +333,26 @@ export const MasterCriteriaPage: React.FC = () => {
 
               {/* Weight Highlights */}
               <div className="grid grid-cols-2 gap-3 text-xs font-semibold">
-                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Bobot Awal (Wj)</span>
-                  <span className="font-black text-lg text-slate-800">{Number(c.raw_weight).toFixed(0)}</span>
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Bobot Awal (Wj)</span>
+                  <span className="font-bold text-lg text-slate-900">{Number(c.raw_weight).toFixed(0)}</span>
                 </div>
 
-                <div className="bg-emerald-50/70 p-3 rounded-2xl border border-emerald-200">
-                  <span className="text-emerald-700 block text-[10px] uppercase font-bold">Bobot Ternormalisasi (wj)</span>
-                  <span className="font-black text-lg text-emerald-900">{Number(c.normalized_weight).toFixed(4)} ({Math.round(Number(c.normalized_weight) * 100)}%)</span>
+                <div className="bg-emerald-50/80 p-3 rounded-xl border border-emerald-200">
+                  <span className="text-emerald-800 block text-[10px] uppercase font-bold">Bobot Ternormalisasi (wj)</span>
+                  <span className="font-extrabold text-lg text-emerald-900">{Number(c.normalized_weight).toFixed(4)} ({Math.round(Number(c.normalized_weight) * 100)}%)</span>
                 </div>
               </div>
 
               {/* Sub-Criteria Section */}
               <div className="pt-3 border-t border-slate-100 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                     Parameter Skala Sub-Kriteria ({c.sub_criteria?.length || 0}):
                   </span>
                   <button
                     onClick={() => handleOpenCreateSub(c)}
-                    className="text-[11px] font-bold text-kopkar-800 hover:text-kopkar-900 flex items-center gap-1 hover:underline"
+                    className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 hover:underline"
                   >
                     <Plus className="w-3.5 h-3.5" /> Tambah Sub
                   </button>
@@ -367,7 +367,7 @@ export const MasterCriteriaPage: React.FC = () => {
                       >
                         <span className="text-slate-700 font-medium">{sub.label}</span>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-kopkar-800 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                          <span className="font-mono font-bold text-emerald-900 bg-white px-2 py-0.5 rounded-md border border-slate-200">
                             {Number(sub.score_value).toFixed(0)}
                           </span>
                           <button
@@ -424,14 +424,14 @@ export const MasterCriteriaPage: React.FC = () => {
       {isCriteriaModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
-            <div className="kopkar-gradient p-6 text-white flex justify-between items-center">
+            <div className="bg-gradient-to-r from-emerald-800 to-teal-900 p-6 text-white flex justify-between items-center">
               <div>
-                <h3 className="font-extrabold text-lg">
+                <h3 className="font-extrabold text-lg text-white">
                   {editingCriterion ? `Edit Kriteria ${editingCriterion.code}` : 'Tambah Kriteria Baru'}
                 </h3>
                 <p className="text-xs text-emerald-200">Normalisasi bobot dieksekusi otomatis oleh sistem</p>
               </div>
-              <button onClick={() => setIsCriteriaModalOpen(false)} className="text-white/80 hover:text-white">
+              <button onClick={() => setIsCriteriaModalOpen(false)} className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -507,13 +507,13 @@ export const MasterCriteriaPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsCriteriaModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl kopkar-gradient text-white font-extrabold shadow-md hover:opacity-95"
+                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all"
                 >
                   Simpan Kriteria
                 </button>
@@ -529,14 +529,14 @@ export const MasterCriteriaPage: React.FC = () => {
       {isSubModalOpen && selectedParentCriterion && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
-            <div className="kopkar-gradient p-6 text-white flex justify-between items-center">
+            <div className="bg-gradient-to-r from-emerald-800 to-teal-900 p-6 text-white flex justify-between items-center">
               <div>
-                <h3 className="font-extrabold text-lg">
+                <h3 className="font-extrabold text-lg text-white">
                   {editingSub ? 'Edit Sub-Kriteria' : 'Tambah Sub-Kriteria'}
                 </h3>
                 <p className="text-xs text-emerald-200">Untuk Kriteria: {selectedParentCriterion.code} - {selectedParentCriterion.name}</p>
               </div>
-              <button onClick={() => setIsSubModalOpen(false)} className="text-white/80 hover:text-white">
+              <button onClick={() => setIsSubModalOpen(false)} className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -575,13 +575,13 @@ export const MasterCriteriaPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsSubModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl kopkar-gradient text-white font-extrabold shadow-md hover:opacity-95"
+                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all"
                 >
                   Simpan Sub-Kriteria
                 </button>
@@ -597,12 +597,12 @@ export const MasterCriteriaPage: React.FC = () => {
       {isWeightModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
-            <div className="kopkar-gradient p-6 text-white flex justify-between items-center">
+            <div className="bg-gradient-to-r from-emerald-800 to-teal-900 p-6 text-white flex justify-between items-center">
               <div>
-                <h3 className="font-extrabold text-lg">Normalisasi Bobot Kriteria Cepat</h3>
+                <h3 className="font-extrabold text-lg text-white">Normalisasi Bobot Kriteria Cepat</h3>
                 <p className="text-xs text-emerald-200">Sistem otomatis menghitung wj = Wj / Σ Wk</p>
               </div>
-              <button onClick={() => setIsWeightModalOpen(false)} className="text-white/80 hover:text-white">
+              <button onClick={() => setIsWeightModalOpen(false)} className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -611,7 +611,7 @@ export const MasterCriteriaPage: React.FC = () => {
               {criteria.map((c) => (
                 <div key={c.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
                   <div>
-                    <span className="font-black text-kopkar-800 text-sm">{c.code}</span> - <span className="font-bold text-slate-800">{c.name}</span>
+                    <span className="font-black text-emerald-800 text-sm">{c.code}</span> - <span className="font-bold text-slate-800">{c.name}</span>
                   </div>
                   <input
                     type="number"
@@ -631,13 +631,13 @@ export const MasterCriteriaPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsWeightModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl kopkar-gradient text-white font-extrabold shadow-md hover:opacity-95"
+                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all"
                 >
                   Terapkan &amp; Normalisasi
                 </button>

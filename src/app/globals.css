@@ -1,26 +1,69 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --primary: #047857;
+  --primary-hover: #065f46;
+  --primary-light: #ecfdf5;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* Custom Gradients & Consulting-Grade Accents */
+.kopkar-gradient {
+  background: linear-gradient(135deg, #059669 0%, #047857 50%, #064e3b 100%) !important;
+  color: #ffffff !important;
+}
+
+.kopkar-gradient-subtle {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%) !important;
+}
+
+.kopkar-header-gradient {
+  background: linear-gradient(180deg, #064e3b 0%, #047857 100%) !important;
+}
+
+/* Modern enterprise card styling */
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+}
+
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+}
+
+/* Fallback colors for kopkar- and gold- in case legacy classes exist */
+.bg-kopkar-50 { background-color: #ecfdf5 !important; }
+.bg-kopkar-100 { background-color: #d1fae5 !important; }
+.bg-kopkar-200 { background-color: #a7f3d0 !important; }
+.bg-kopkar-300 { background-color: #6ee7b7 !important; }
+.bg-kopkar-600 { background-color: #059669 !important; }
+.bg-kopkar-700 { background-color: #047857 !important; }
+.bg-kopkar-800 { background-color: #065f46 !important; }
+.bg-kopkar-900 { background-color: #064e3b !important; }
+.bg-kopkar-950 { background-color: #022c22 !important; }
+
+.text-kopkar-700 { color: #047857 !important; }
+.text-kopkar-800 { color: #065f46 !important; }
+.text-kopkar-900 { color: #064e3b !important; }
+
+.border-kopkar-200 { border-color: #a7f3d0 !important; }
+.border-kopkar-300 { border-color: #6ee7b7 !important; }
+
+.text-gold-300 { color: #fde047 !important; }
+.text-gold-400 { color: #facc15 !important; }

@@ -25,7 +25,8 @@ import {
   UploadCloud,
   File,
   Sparkles,
-  Calendar
+  Calendar,
+  Banknote
 } from 'lucide-react';
 
 export const MemberDashboard: React.FC = () => {
@@ -43,6 +44,13 @@ export const MemberDashboard: React.FC = () => {
   const [keperluan, setKeperluan] = useState<string>('');
   const [noRekening, setNoRekening] = useState<string>(user?.no_rekening_muamalat || '3910000280');
   const [namaRekening, setNamaRekening] = useState<string>(user?.nama_rekening || user?.name || '');
+
+  // Salary & Capacity calculation (Humanized)
+  const [gajiPokok, setGajiPokok] = useState<number>(8500000);
+  const [potonganGaji, setPotonganGaji] = useState<number>(3825000);
+
+  const sisaGaji = Math.max(0, gajiPokok - potonganGaji);
+  const rasioTHP = gajiPokok > 0 ? Math.round((sisaGaji / gajiPokok) * 100) : 0;
 
   // File Uploads with Real Base64
   const [slipGaji, setSlipGaji] = useState<{ name: string; base64: string }>({ name: 'Slip_Gaji_Bulan_Ini.pdf', base64: '' });
@@ -125,6 +133,7 @@ export const MemberDashboard: React.FC = () => {
         keperluan_pinjaman: keperluan,
         no_rekening_muamalat: noRekening,
         nama_rekening: namaRekening,
+        sisa_thp_persen: rasioTHP,
         documents: docPayload,
       });
 
@@ -667,10 +676,82 @@ export const MemberDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Section 2: Rekening Bank Muamalat */}
+              {/* Section 2: Penghasilan Bulanan & Sisa Gaji (Humanized) */}
+              <div className="pt-4 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-extrabold text-xs uppercase tracking-wider flex items-center gap-1.5 text-emerald-900">
+                    <Banknote className="w-4 h-4 text-emerald-600" /> 2. Penghasilan Bulanan (Data Slip Gaji)
+                  </h4>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    Kapasitas Angsuran
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Gaji Pokok &amp; Tunjangan Tetap (Rp)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 font-bold text-slate-400 text-xs">Rp</span>
+                      <input
+                        type="text"
+                        required
+                        value={gajiPokok ? gajiPokok.toLocaleString('id-ID') : ''}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/\D/g, '');
+                          setGajiPokok(raw ? Number(raw) : 0);
+                        }}
+                        placeholder="8.500.000"
+                        className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-900 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">
+                      Total Potongan Rutin di Slip (Rp)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 font-bold text-slate-400 text-xs">Rp</span>
+                      <input
+                        type="text"
+                        required
+                        value={potonganGaji ? potonganGaji.toLocaleString('id-ID') : ''}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/\D/g, '');
+                          setPotonganGaji(raw ? Number(raw) : 0);
+                        }}
+                        placeholder="3.825.000"
+                        className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 font-bold text-slate-900 text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Realtime Sisa Gaji & Kapasitas Card */}
+                <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/90 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-emerald-800 block">Sisa Gaji Bersih (Take Home Pay)</span>
+                    <span className="font-black text-sm text-emerald-950 font-mono">
+                      {formatCurrency(sisaGaji)}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-bold text-emerald-800 block">Rasio Kapasitas Gaji</span>
+                    <span className={`inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                      rasioTHP >= 50 ? 'bg-emerald-600 text-white' : rasioTHP >= 40 ? 'bg-blue-600 text-white' : 'bg-amber-500 text-white'
+                    }`}>
+                      {rasioTHP}% {rasioTHP >= 50 ? '✓ Sangat Aman' : rasioTHP >= 40 ? '✓ Cukup' : '⚠️ Perlu Disesuaikan'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Rekening Bank Muamalat */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <h4 className="font-extrabold text-xs uppercase tracking-wider flex items-center gap-1.5 text-emerald-900">
-                  <Building className="w-4 h-4 text-emerald-600" /> 2. Rekening Bank Muamalat (Pencairan Dana)
+                  <Building className="w-4 h-4 text-emerald-600" /> 3. Rekening Bank Muamalat (Pencairan Dana)
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -697,10 +778,10 @@ export const MemberDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Section 3: Upload 4 Berkas Persyaratan (Real Base64) */}
+              {/* Section 4: Upload 4 Berkas Persyaratan (Real Base64) */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <h4 className="font-extrabold text-xs uppercase tracking-wider flex items-center gap-1.5 text-emerald-900">
-                  <UploadCloud className="w-4 h-4 text-emerald-600" /> 3. Unggah Berkas Persyaratan Asli (PDF/JPG)
+                  <UploadCloud className="w-4 h-4 text-emerald-600" /> 4. Unggah Berkas Persyaratan Asli (PDF/JPG)
                 </h4>
 
                 <div className="space-y-2.5">

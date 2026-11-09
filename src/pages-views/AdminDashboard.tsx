@@ -47,13 +47,17 @@ export const AdminDashboard: React.FC = () => {
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
   
   // Clean text states for C1 - C4 inputs
-  const [valC1, setValC1] = useState<string>('65');
+  const [valC1, setValC1] = useState<string>('55');
   const [valC2, setValC2] = useState<string>('6.500.000');
   const [valC3, setValC3] = useState<string>('6');
   const [valC4, setValC4] = useState<string>('100');
   const [assessmentNotes, setAssessmentNotes] = useState<string>('');
   const [isAssessing, setIsAssessing] = useState(false);
   const [isForwarding, setIsForwarding] = useState(false);
+
+  // Humanized Salary calculation states
+  const [gajiVerify, setGajiVerify] = useState<number>(8500000);
+  const [potonganVerify, setPotonganVerify] = useState<number>(3825000);
 
 
   // Request Revision & Adjustment states
@@ -65,48 +69,47 @@ export const AdminDashboard: React.FC = () => {
 
   const [actionMsg, setActionMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Realtime Detection Helpers for C1 - C4
+  // Realtime Detection Helpers for Credit Parameters
   const detectC1 = (inputVal: string) => {
-    if (!inputVal && inputVal !== '0') return { score: 100, label: 'Masukkan persen Sisa THP (misal: 65%)' };
+    if (!inputVal && inputVal !== '0') return { score: 100, label: 'Masukkan rasio Sisa THP' };
     const num = Number(inputVal.replace(/\D/g, ''));
-    if (num >= 60) return { score: 100, label: '✓ Skala Terdeteksi: Sisa THP ≥ 60% — Nilai Sub-Kriteria 100 (Sangat Baik / Kapasitas Aman)' };
-    if (num >= 50) return { score: 75, label: '✓ Skala Terdeteksi: Sisa THP 50% - 59% — Nilai Sub-Kriteria 75 (Baik)' };
-    if (num >= 40) return { score: 50, label: '✓ Skala Terdeteksi: Sisa THP 40% - 49% — Nilai Sub-Kriteria 50 (Cukup)' };
-    return { score: 25, label: '✓ Skala Terdeteksi: Sisa THP < 40% — Nilai Sub-Kriteria 25 (Kurang / Berisiko)' };
+    if (num >= 50) return { score: 100, label: '✓ Kapasitas Gaji Sangat Aman (Sisa THP ≥ 50%) — Skor Kelayakan Maksimal' };
+    if (num >= 40) return { score: 75, label: '✓ Kapasitas Gaji Cukup Aman (40% - 49%) — Skor Kelayakan Baik' };
+    return { score: 25, label: '⚠️ Kapasitas Gaji Minim (< 40%) — Berisiko, Disarankan Penyesuaian Tenor' };
   };
 
   const detectC2 = (inputVal: string) => {
-    if (!inputVal && inputVal !== '0') return { score: 100, label: 'Masukkan nominal Simpanan Wajib (misal: 6.500.000)' };
+    if (!inputVal && inputVal !== '0') return { score: 100, label: 'Masukkan nominal Simpanan Koperasi' };
     const num = Number(inputVal.replace(/\D/g, ''));
-    if (num > 5000000) return { score: 100, label: '✓ Skala Terdeteksi: Simpanan > Rp 5.000.000,- — Nilai Sub-Kriteria 100 (Sangat Baik)' };
-    if (num >= 3000000) return { score: 75, label: '✓ Skala Terdeteksi: Simpanan Rp 3.000.000 - Rp 5.000.000,- — Nilai Sub-Kriteria 75 (Baik)' };
-    if (num >= 1000000) return { score: 50, label: '✓ Skala Terdeteksi: Simpanan Rp 1.000.000 - Rp 2.999.999,- — Nilai Sub-Kriteria 50 (Cukup)' };
-    return { score: 25, label: '✓ Skala Terdeteksi: Simpanan < Rp 1.000.000,- — Nilai Sub-Kriteria 25 (Kurang)' };
+    if (num > 5000000) return { score: 100, label: '✓ Saldo Simpanan > Rp 5.000.000,- — Jaminan Sangat Kuat' };
+    if (num >= 3000000) return { score: 75, label: '✓ Saldo Simpanan Rp 3.000.000 - Rp 5.000.000,- — Jaminan Cukup Kuat' };
+    if (num >= 1000000) return { score: 50, label: '✓ Saldo Simpanan Rp 1.000.000 - Rp 2.999.999,- — Jaminan Standar' };
+    return { score: 25, label: '⚠️ Saldo Simpanan < Rp 1.000.000,- — Jaminan Minim' };
   };
 
   const detectC3 = (inputVal: string) => {
-    if (!inputVal && inputVal !== '0') return { score: 100, label: 'Masukkan masa kerja dalam tahun (misal: 6)' };
+    if (!inputVal && inputVal !== '0') return { score: 100, label: 'Masukkan masa kerja dalam tahun' };
     const num = Number(inputVal.replace(/\D/g, ''));
-    if (num > 5) return { score: 100, label: '✓ Skala Terdeteksi: Pegawai Tetap > 5 Tahun — Nilai Sub-Kriteria 100 (Prioritas Utama)' };
-    if (num >= 3) return { score: 75, label: '✓ Skala Terdeteksi: Pegawai Tetap ≤ 5 Tahun — Nilai Sub-Kriteria 75 (Prioritas Baik)' };
-    if (num >= 2) return { score: 50, label: '✓ Skala Terdeteksi: Pegawai Kontrak ≥ 2 Tahun — Nilai Sub-Kriteria 50 (Cukup)' };
-    return { score: 25, label: '✓ Skala Terdeteksi: Pegawai Kontrak < 2 Tahun — Nilai Sub-Kriteria 25 (Minimal)' };
+    if (num > 5) return { score: 100, label: '✓ Pegawai Tetap > 5 Tahun — Stabilitas Prioritas Utama' };
+    if (num >= 3) return { score: 75, label: '✓ Pegawai Tetap ≤ 5 Tahun — Stabilitas Baik' };
+    if (num >= 2) return { score: 50, label: '✓ Pegawai Kontrak ≥ 2 Tahun — Stabilitas Cukup' };
+    return { score: 25, label: '⚠️ Pegawai Kontrak < 2 Tahun — Masa Ikatan Kerja Terbatas' };
   };
 
   const detectC4 = (inputVal: string) => {
-    if (!inputVal && inputVal !== '0') return { score: 100, label: 'Masukkan riwayat (misal: 100 atau Sangat Lancar)' };
+    if (!inputVal && inputVal !== '0') return { score: 100, label: 'Pilih status kedisiplinan angsuran' };
     const str = inputVal.toLowerCase();
     const num = Number(str.replace(/\D/g, ''));
     if (num === 100 || str.includes('sangat') || str.includes('lancar') || str.includes('belum')) {
-      return { score: 100, label: '✓ Skala Terdeteksi: Sangat Lancar / Belum Pernah Meminjam — Nilai Sub-Kriteria 100' };
+      return { score: 100, label: '✓ Sangat Lancar / Anggota Baru — Kolektibilitas Sempurna' };
     }
     if (num === 75 || str.includes('tepat') || str.includes('lunas')) {
-      return { score: 75, label: '✓ Skala Terdeteksi: Pernah Meminjam & Lunas Tepat Waktu — Nilai Sub-Kriteria 75' };
+      return { score: 75, label: '✓ Pernah Meminjam & Lunas Tepat Waktu — Kolektibilitas Baik' };
     }
     if (num === 50 || str.includes('tenor') || str.includes('sesuai')) {
-      return { score: 50, label: '✓ Skala Terdeteksi: Pernah Mengajukan Penyesuaian Tenor — Nilai Sub-Kriteria 50' };
+      return { score: 50, label: '✓ Pernah Ada Penyesuaian Tenor — Kolektibilitas Cukup' };
     }
-    return { score: 25, label: '✓ Skala Terdeteksi: Riwayat Pembayaran Kurang Lancar — Nilai Sub-Kriteria 25' };
+    return { score: 25, label: '⚠️ Riwayat Pernah Menunggak / Kurang Lancar' };
   };
 
   const fetchData = async () => {
@@ -171,6 +174,12 @@ export const AdminDashboard: React.FC = () => {
     setAdjKeperluan(loan.keperluan_pinjaman || '');
 
     // Pre-fill from member application data or saved assessment
+    const initGaji = 8500000;
+    const initPct = loan.sisa_thp_persen ? Number(loan.sisa_thp_persen) : 55;
+    const initPotongan = Math.round(initGaji * (1 - initPct / 100));
+    setGajiVerify(initGaji);
+    setPotonganVerify(initPotongan);
+
     if (loan.smart_evaluation) {
       setValC1(String(loan.smart_evaluation.val_c1));
       setValC2(String(loan.smart_evaluation.val_c2));
@@ -178,7 +187,7 @@ export const AdminDashboard: React.FC = () => {
       setValC4(String(loan.smart_evaluation.val_c4));
       setAssessmentNotes(loan.verification_notes || 'Berkas telah dinilai dan diverifikasi oleh Petugas Simpin.');
     } else {
-      setValC1(loan.sisa_thp_persen ? String(loan.sisa_thp_persen) : '65');
+      setValC1(String(initPct));
       setValC2(loan.simpanan_wajib ? Number(loan.simpanan_wajib).toLocaleString('id-ID') : '6.500.000');
       setValC3(loan.masa_kerja_tahun ? String(loan.masa_kerja_tahun) : '6');
       setValC4('100');
@@ -309,6 +318,9 @@ export const AdminDashboard: React.FC = () => {
       minute: '2-digit'
     });
   };
+
+  const sisaVerify = Math.max(0, gajiVerify - potonganVerify);
+  const rasioVerify = gajiVerify > 0 ? Math.round((sisaVerify / gajiVerify) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -903,45 +915,119 @@ export const AdminDashboard: React.FC = () => {
                   </p>
                 </div>
 
-                {/* C1: Sisa THP */}
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1.5">
+                {/* 1. Kapasitas Gaji / Sisa THP */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="font-semibold text-slate-800 text-xs">
-                      1. Rasio Sisa Gaji / Take Home Pay (Kapasitas Cicilan)
-                    </label>
-                    <span className="text-[10px] text-slate-400 font-mono">Kode C1 (Benefit, Bobot 30%)</span>
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={valC1}
-                    onChange={(e) => setValC1(e.target.value)}
-                    placeholder="misal: 65% (Ketik persentase Sisa THP pemohon)"
-                    className="w-full p-2.5 rounded-lg border border-slate-300 font-semibold text-slate-900 bg-white text-xs focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600"
-                  />
-                  {valC1 !== '' && (
-                    <div className="text-[11px] font-medium text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                      {detectC1(valC1).label}
+                    <div>
+                      <span className="font-bold text-slate-900 text-xs block">
+                        1. Kapasitas Angsuran (Data Slip Gaji Pemohon)
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        Input nominal gaji dan potongan rutin, sistem menghitung sisa gaji bersih otomatis.
+                      </span>
                     </div>
-                  )}
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                      Kapasitas Gaji (THP)
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                        Gaji Pokok &amp; Tunjangan Tetap
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 font-bold text-slate-400 text-xs">Rp</span>
+                        <input
+                          type="text"
+                          required
+                          value={gajiVerify ? gajiVerify.toLocaleString('id-ID') : ''}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, '');
+                            const val = raw ? Number(raw) : 0;
+                            setGajiVerify(val);
+                            const sisa = Math.max(0, val - potonganVerify);
+                            const rasio = val > 0 ? Math.round((sisa / val) * 100) : 0;
+                            setValC1(String(rasio));
+                          }}
+                          placeholder="8.500.000"
+                          className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 font-bold text-slate-900 bg-white text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                        Total Potongan Rutin di Slip
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 font-bold text-slate-400 text-xs">Rp</span>
+                        <input
+                          type="text"
+                          required
+                          value={potonganVerify ? potonganVerify.toLocaleString('id-ID') : ''}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, '');
+                            const val = raw ? Number(raw) : 0;
+                            setPotonganVerify(val);
+                            const sisa = Math.max(0, gajiVerify - val);
+                            const rasio = gajiVerify > 0 ? Math.round((sisa / gajiVerify) * 100) : 0;
+                            setValC1(String(rasio));
+                          }}
+                          placeholder="3.825.000"
+                          className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 font-bold text-slate-900 bg-white text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Realtime Result Card */}
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold block">Sisa Gaji Bersih</span>
+                      <span className="font-bold text-slate-900 text-xs font-mono">{formatCurrency(sisaVerify)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold block">Rasio Kapasitas</span>
+                      <span className="font-extrabold text-sm text-emerald-700 font-mono">{rasioVerify}%</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold block">Status Kelayakan</span>
+                      <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded ${
+                        rasioVerify >= 50 ? 'bg-emerald-100 text-emerald-800' : rasioVerify >= 40 ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {rasioVerify >= 50 ? '✓ Sangat Aman (≥ 50%)' : rasioVerify >= 40 ? '✓ Cukup Aman (40-49%)' : '⚠️ Berisiko (< 40%)'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* C2: Simpanan Wajib */}
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1.5">
+                {/* 2. Simpanan Wajib */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="font-semibold text-slate-800 text-xs">
-                      2. Saldo Simpanan Wajib Anggota (Jaminan Finansial)
-                    </label>
-                    <span className="text-[10px] text-slate-400 font-mono">Kode C2 (Benefit, Bobot 20%)</span>
+                    <div>
+                      <label className="font-bold text-slate-900 text-xs block">
+                        2. Saldo Simpanan Koperasi (Jaminan Finansial)
+                      </label>
+                      <span className="text-[11px] text-slate-500">
+                        Total akumulasi simpanan pokok &amp; wajib anggota di Koperasi Al-Azhar.
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                      Jaminan Simpanan
+                    </span>
                   </div>
-                  <input
-                    type="text"
-                    required
-                    value={valC2}
-                    onChange={(e) => setValC2(e.target.value)}
-                    placeholder="misal: 6.500.000 (Ketik jumlah simpanan rupiah)"
-                    className="w-full p-2.5 rounded-lg border border-slate-300 font-semibold text-slate-900 bg-white text-xs focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 font-bold text-slate-400 text-xs">Rp</span>
+                    <input
+                      type="text"
+                      required
+                      value={valC2}
+                      onChange={(e) => setValC2(e.target.value)}
+                      placeholder="6.500.000"
+                      className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 font-bold text-slate-900 bg-white text-xs"
+                    />
+                  </div>
                   {valC2 !== '' && (
                     <div className="text-[11px] font-medium text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
                       {detectC2(valC2).label}
@@ -949,22 +1035,40 @@ export const AdminDashboard: React.FC = () => {
                   )}
                 </div>
 
-                {/* C3: Masa Kerja & Status */}
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1.5">
+                {/* 3. Masa Kerja & Status */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="font-semibold text-slate-800 text-xs">
-                      3. Masa Kerja &amp; Status Kepegawaian (Jaminan Payroll)
-                    </label>
-                    <span className="text-[10px] text-slate-400 font-mono">Kode C3 (Benefit, Bobot 20%)</span>
+                    <div>
+                      <label className="font-bold text-slate-900 text-xs block">
+                        3. Masa Kerja &amp; Status Kepegawaian (Stabilitas Kerja)
+                      </label>
+                      <span className="text-[11px] text-slate-500">
+                        Status kepegawaian yayasan dan durasi lama mengabdi di Al-Azhar BSD.
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                      Stabilitas Kepegawaian
+                    </span>
                   </div>
-                  <input
-                    type="text"
-                    required
-                    value={valC3}
-                    onChange={(e) => setValC3(e.target.value)}
-                    placeholder="misal: 6 (Ketik lama masa kerja dalam tahun)"
-                    className="w-full p-2.5 rounded-lg border border-slate-300 font-semibold text-slate-900 bg-white text-xs focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600"
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Masa Kerja (Tahun)</label>
+                      <input
+                        type="text"
+                        required
+                        value={valC3}
+                        onChange={(e) => setValC3(e.target.value)}
+                        placeholder="misal: 6"
+                        className="w-full p-2 rounded-xl border border-slate-300 font-bold text-slate-900 bg-white text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Status Kepegawaian</label>
+                      <div className="p-2 bg-white rounded-xl border border-slate-300 font-bold text-slate-800 text-xs">
+                        {selectedLoan.status_pegawai || 'TETAP'}
+                      </div>
+                    </div>
+                  </div>
                   {valC3 !== '' && (
                     <div className="text-[11px] font-medium text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
                       {detectC3(valC3).label}
@@ -972,37 +1076,43 @@ export const AdminDashboard: React.FC = () => {
                   )}
                 </div>
 
-                {/* C4: Riwayat Pinjaman */}
-                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1.5">
+                {/* 4. Rekam Jejak Angsuran */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="font-semibold text-slate-800 text-xs">
-                      4. Rekam Jejak Angsuran / Kolektibilitas
-                    </label>
-                    <span className="text-[10px] text-slate-400 font-mono">Kode C4 (Benefit, Bobot 15%)</span>
+                    <div>
+                      <label className="font-bold text-slate-900 text-xs block">
+                        4. Rekam Jejak Angsuran / Kolektibilitas
+                      </label>
+                      <span className="text-[11px] text-slate-500">
+                        Kedisiplinan pembayaran angsuran pinjaman sebelumnya di koperasi.
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                      Kolektibilitas
+                    </span>
                   </div>
-                  <input
-                    type="text"
-                    required
+                  <select
                     value={valC4}
                     onChange={(e) => setValC4(e.target.value)}
-                    placeholder="misal: 100 atau Sangat Lancar"
-                    className="w-full p-2.5 rounded-lg border border-slate-300 font-semibold text-slate-900 bg-white text-xs focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600"
-                  />
-                  {valC4 !== '' && (
-                    <div className="text-[11px] font-medium text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                      {detectC4(valC4).label}
-                    </div>
-                  )}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-slate-900 bg-white text-xs"
+                  >
+                    <option value="100">Sangat Lancar / Anggota Baru (Kolektibilitas Sempurna)</option>
+                    <option value="75">Pernah Meminjam &amp; Lunas Tepat Waktu</option>
+                    <option value="50">Pernah Mengajukan Penyesuaian Tenor</option>
+                    <option value="25">Riwayat Pembayaran Kurang Lancar</option>
+                  </select>
                 </div>
 
-                {/* C5: Otomatis dari Plafon */}
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+                {/* 5. Plafon Pinjaman yang Diajukan */}
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between text-xs">
                   <div>
-                    <span className="font-semibold text-slate-900 block">5. Plafon Pinjaman yang Diajukan (Faktor Beban)</span>
-                    <span className="text-[11px] text-slate-500">Nominal: {formatCurrency(selectedLoan.nominal_pengajuan)}</span>
+                    <span className="font-bold text-slate-900 block">5. Plafon Pinjaman yang Diajukan (Beban Pinjaman)</span>
+                    <span className="text-[11px] text-slate-500">
+                      Nominal Pengajuan: <strong className="text-emerald-900">{formatCurrency(selectedLoan.nominal_pengajuan)}</strong> (Tenor: {selectedLoan.tenor_bulan} Bulan)
+                    </span>
                   </div>
-                  <span className="text-[11px] font-mono font-semibold text-slate-600 bg-white px-2 py-1 rounded border border-slate-200">
-                    Kode C5 (Cost, Bobot 15%)
+                  <span className="text-[10px] font-bold text-slate-700 bg-white px-2.5 py-1 rounded-full border border-slate-200">
+                    Beban Pengajuan
                   </span>
                 </div>
 

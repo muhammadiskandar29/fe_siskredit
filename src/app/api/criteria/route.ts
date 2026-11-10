@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth';
+import { SmartEngineService } from '@/lib/smartEngine';
 
 export async function GET(req: NextRequest) {
   try {
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Re-normalize all weights
-    await renormalizeCriteria();
+    await SmartEngineService.renormalizeCriteria();
 
     return NextResponse.json({
       success: true,
@@ -85,19 +86,5 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error?.message || 'Server error' }, { status: 500 });
-  }
-}
-
-export async function renormalizeCriteria() {
-  const allCriteria = await prisma.criterion.findMany();
-  const total = allCriteria.reduce((sum, c) => sum + c.weight, 0);
-  if (total > 0) {
-    for (const c of allCriteria) {
-      const norm = Math.round((c.weight / total) * 10000) / 10000;
-      await prisma.criterion.update({
-        where: { id: c.id },
-        data: { normalized_weight: norm },
-      });
-    }
   }
 }

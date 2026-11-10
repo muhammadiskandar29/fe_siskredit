@@ -14,13 +14,7 @@ export async function POST(req: NextRequest) {
 
     // Support Bulk / Batch Import (e.g. 150 records)
     if (body.batch && Array.isArray(body.batch)) {
-      const records = [];
-      for (const item of body.batch) {
-        if (!item.candidate_name) continue;
-        const res = await SmartEngineService.calculateManualSimulation(item);
-        records.push(res);
-      }
-      await SmartEngineService.reRankAll();
+      const records = await SmartEngineService.calculateBatchSimulations(body.batch);
 
       return NextResponse.json({
         success: true,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth';
-import { renormalizeCriteria } from '../route';
+import { SmartEngineService } from '@/lib/smartEngine';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    await renormalizeCriteria();
+    await SmartEngineService.renormalizeCriteria();
 
     return NextResponse.json({
       success: true,

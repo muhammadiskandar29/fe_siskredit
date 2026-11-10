@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth';
-import { renormalizeCriteria } from '../route';
+import { SmartEngineService } from '@/lib/smartEngine';
 
 export async function PUT(
   req: NextRequest,
@@ -25,7 +25,7 @@ export async function PUT(
       },
     });
 
-    await renormalizeCriteria();
+    await SmartEngineService.renormalizeCriteria();
 
     return NextResponse.json({
       success: true,
@@ -52,7 +52,7 @@ export async function DELETE(
       where: { id: parseInt(id) },
     });
 
-    await renormalizeCriteria();
+    await SmartEngineService.renormalizeCriteria();
 
     return NextResponse.json({
       success: true,

@@ -265,6 +265,17 @@ export const MemberDashboard: React.FC = () => {
                         {loan.application_number}
                       </span>
                       <StatusBadge status={loan.status} />
+                      {['approved', 'disbursed'].includes(loan.status) && (
+                        loan.metode_pembayaran === 'transfer_manual' ? (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                            Mandiri (QRIS Dinamis)
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-300">
+                            Potong Gaji (Payroll Tgl 25)
+                          </span>
+                        )
+                      )}
                     </div>
 
                     <h4 className="font-extrabold text-2xl text-slate-900 tracking-tight">

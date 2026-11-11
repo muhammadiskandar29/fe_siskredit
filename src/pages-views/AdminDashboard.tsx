@@ -11,22 +11,23 @@ import {
   CheckCircle2, 
   XCircle, 
   Cpu, 
-  FileCheck,
-  Eye,
-  FileText,
-  AlertCircle,
-  Clock,
-  Layers,
-  Calculator,
-  Check,
-  Download,
-  Send,
-  ExternalLink,
-  Calendar,
-  UserPlus,
-  BookOpen,
-  SlidersHorizontal,
-  ChevronRight
+  FileCheck, 
+  Eye, 
+  FileText, 
+  AlertCircle, 
+  Clock, 
+  Layers, 
+  Calculator, 
+  Check, 
+  Download, 
+  Send, 
+  ExternalLink, 
+  Calendar, 
+  UserPlus, 
+  BookOpen, 
+  SlidersHorizontal, 
+  ChevronRight,
+  Building
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -34,7 +35,14 @@ export const AdminDashboard: React.FC = () => {
   const [criteria, setCriteria] = useState<Criterion[]>([]);
   const [evaluations, setEvaluations] = useState<SmartEvaluation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'verification' | 'smart_matrix'>('verification');
+  const [activeTab, setActiveTab] = useState<'verification' | 'smart_matrix' | 'payroll_reconciliation'>('verification');
+
+  // Payroll Reconciliation States
+  const [payrollMonth, setPayrollMonth] = useState<number>(new Date().getMonth() + 1);
+  const [payrollYear, setPayrollYear] = useState<number>(new Date().getFullYear());
+  const [payrollData, setPayrollData] = useState<any>(null);
+  const [isPayrollLoading, setIsPayrollLoading] = useState<boolean>(false);
+  const [isSettling, setIsSettling] = useState<boolean>(false);
   
   // Dual-Layer Visual State: Business vs Academic (Thesis Defense)
   const [visualMode, setVisualMode] = useState<'business' | 'academic'>('business');
@@ -322,6 +330,81 @@ export const AdminDashboard: React.FC = () => {
   const sisaVerify = Math.max(0, gajiVerify - potonganVerify);
   const rasioVerify = gajiVerify > 0 ? Math.round((sisaVerify / gajiVerify) * 100) : 0;
 
+  const getMonthName = (m: number) => {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return months[m - 1] || `Bulan ${m}`;
+  };
+
+  const fetchPayroll = async (m = payrollMonth, y = payrollYear) => {
+    setIsPayrollLoading(true);
+    try {
+      const res = await api.get(`/installments/payroll-settlement?month=${m}&year=${y}`);
+      if (res.data.success) {
+        setPayrollData(res.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching payroll settlement:', err);
+    } finally {
+      setIsPayrollLoading(false);
+    }
+  };
+
+  const handleExecuteSettlement = async () => {
+    if (!payrollData || payrollData.total_belum_lunas === 0) return;
+    const confirmMsg = `Konfirmasi eksekusi pelunasan payroll periode ${getMonthName(payrollMonth)} ${payrollYear} untuk ${payrollData.total_belum_lunas} tagihan pegawai? Tindakan ini akan mencatat status LUNAS via potong gaji pada sistem.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsSettling(true);
+    try {
+      const res = await api.post('/installments/payroll-settlement', {
+        month: payrollMonth,
+        year: payrollYear,
+        catatan_settlement: `Pelunasan kolektif potongan gaji payroll periode ${getMonthName(payrollMonth)} ${payrollYear} Al-Azhar BSD.`,
+      });
+
+      if (res.data.success) {
+        setActionMsg({ type: 'success', text: res.data.message });
+        fetchPayroll(payrollMonth, payrollYear);
+        fetchData();
+      }
+    } catch (err: any) {
+      setActionMsg({ type: 'error', text: err.response?.data?.message || 'Gagal mengeksekusi pelunasan payroll' });
+    } finally {
+      setIsSettling(false);
+    }
+  };
+
+  const handleExportCsv = () => {
+    if (!payrollData || !payrollData.items || payrollData.items.length === 0) return;
+
+    const headers = ['No', 'Nomor Pengajuan', 'NIK Pegawai', 'Nama Pegawai', 'Unit Kerja', 'Rekening Muamalat', 'Angsuran Ke', 'Tenor', 'Nominal Potongan (Rp)', 'Jatuh Tempo', 'Status Tagihan'];
+    const rows = payrollData.items.map((item: any, idx: number) => [
+      idx + 1,
+      item.nomor_pengajuan,
+      `'${item.nik}`,
+      `"${item.nama}"`,
+      item.unit_kerja,
+      `'${item.rekening_muamalat}`,
+      item.angsuran_ke,
+      item.total_tenor,
+      item.nominal_angsuran,
+      item.jatuh_tempo ? new Date(item.jatuh_tempo).toLocaleDateString('id-ID') : '-',
+      item.status === 'paid' ? 'LUNAS (POTONG GAJI)' : 'BELUM DIPOTONG'
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((r: any[]) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Daftar_Nominatif_Payroll_Kopkar_${payrollYear}_${String(payrollMonth).padStart(2, '0')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       
@@ -382,6 +465,19 @@ export const AdminDashboard: React.FC = () => {
         >
           <Cpu className="w-4 h-4" />
           <span>Evaluasi &amp; Ranking Kelayakan ({evaluations.length})</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab('payroll_reconciliation');
+            fetchPayroll(payrollMonth, payrollYear);
+          }}
+          className={`pb-3 transition flex items-center gap-2 border-b-2 ${
+            activeTab === 'payroll_reconciliation' ? 'border-emerald-600 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Building className="w-4 h-4 text-emerald-700" />
+          <span>Rekonsiliasi Payroll Yayasan</span>
         </button>
       </div>
 
@@ -806,6 +902,216 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
+      {/* ============================================================== */}
+      {/* TAB 3: REKONSILIASI & PELUNASAN PAYROLL BULANAN YAYASAN       */}
+      {/* ============================================================== */}
+      {activeTab === 'payroll_reconciliation' && (
+        <div className="space-y-6">
+          
+          {/* Header Card */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <span className="bg-teal-50 text-teal-800 text-[11px] font-bold px-2.5 py-0.5 rounded border border-teal-200 inline-flex items-center gap-1.5 mb-2">
+                  <Building className="w-3.5 h-3.5 text-teal-600" />
+                  Siklus Pemotongan Gaji Pegawai
+                </span>
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">
+                  Rekonsiliasi &amp; Pelunasan Tagihan Payroll Yayasan
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
+                  Data nominatif pemotongan angsuran otomatis dari rekening Bank Muamalat guru dan staf yayasan setiap tanggal 25.
+                  Unduh file rekap untuk diserahkan ke Bagian Keuangan Yayasan Al-Azhar BSD, lalu eksekusi pelunasan serentak setelah transfer kumulatif diterima.
+                </p>
+              </div>
+
+              {/* Period Filter */}
+              <div className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200 shrink-0">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Bulan</label>
+                  <select
+                    value={payrollMonth}
+                    onChange={(e) => {
+                      const m = Number(e.target.value);
+                      setPayrollMonth(m);
+                      fetchPayroll(m, payrollYear);
+                    }}
+                    className="p-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-800 bg-white"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+                      <option key={m} value={m}>{getMonthName(m)}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tahun</label>
+                  <select
+                    value={payrollYear}
+                    onChange={(e) => {
+                      const y = Number(e.target.value);
+                      setPayrollYear(y);
+                      fetchPayroll(payrollMonth, y);
+                    }}
+                    className="p-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-800 bg-white"
+                  >
+                    {[2024, 2025, 2026, 2027].map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary Stat Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-100">
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Total Pegawai Payroll</span>
+                <span className="text-lg font-black text-slate-900 block mt-0.5">
+                  {payrollData?.total_peminjam || 0} Pegawai
+                </span>
+                <span className="text-[10px] text-slate-500">Angsuran aktif bulan ini</span>
+              </div>
+
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Total Tagihan Periode Ini</span>
+                <span className="text-lg font-black text-emerald-800 block mt-0.5 font-mono">
+                  {formatCurrency(payrollData?.total_nominal || 0)}
+                </span>
+                <span className="text-[10px] text-slate-500">Nominal klaim ke Yayasan</span>
+              </div>
+
+              <div className="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200">
+                <span className="text-[10px] font-bold text-emerald-700 uppercase">Sudah Dipotong (Lunas)</span>
+                <span className="text-lg font-black text-emerald-900 block mt-0.5">
+                  {payrollData?.total_lunas || 0} Tagihan
+                </span>
+                <span className="text-[10px] text-emerald-700">Tercatat lunas di sistem</span>
+              </div>
+
+              <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200">
+                <span className="text-[10px] font-bold text-amber-800 uppercase">Menunggu Pelunasan</span>
+                <span className="text-lg font-black text-amber-900 block mt-0.5">
+                  {payrollData?.total_belum_lunas || 0} Tagihan
+                </span>
+                <span className="text-[10px] text-amber-700">Siap dieksekusi</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-slate-100">
+              <div className="text-xs text-slate-500">
+                <span>Periode: <strong>{getMonthName(payrollMonth)} {payrollYear}</strong> (Jatuh tempo setiap tgl 25)</span>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleExportCsv}
+                  disabled={!payrollData || payrollData.items?.length === 0}
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition flex items-center gap-2 disabled:opacity-50"
+                  title="Unduh file Excel/CSV untuk diserahkan ke Bagian Keuangan Yayasan Al-Azhar BSD"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Unduh Rekap Tagihan (CSV/Excel)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleExecuteSettlement}
+                  disabled={isSettling || !payrollData || payrollData.total_belum_lunas === 0}
+                  className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs shadow-xs transition flex items-center gap-2 disabled:opacity-50"
+                  title="Eksekusi tanda Lunas serentak untuk semua tagihan payroll periode ini"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-yellow-300" />
+                  <span>{isSettling ? 'Memproses...' : `Eksekusi Pelunasan Payroll Periode Ini (${payrollData?.total_belum_lunas || 0})`}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Table of Payroll Items */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-900">
+                  Daftar Nominatif Pemotongan Gaji Pegawai
+                </h4>
+                <p className="text-[11px] text-slate-500">
+                  Tagihan pinjaman yang diproses melalui payroll Yayasan Al-Azhar BSD
+                </p>
+              </div>
+              <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                {payrollData?.items?.length || 0} Data Tagihan
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              {isPayrollLoading ? (
+                <div className="text-center py-12 text-slate-400 text-xs">
+                  <Clock className="w-6 h-6 mx-auto animate-spin mb-2 text-emerald-600" />
+                  <span>Memuat data rekonsiliasi payroll...</span>
+                </div>
+              ) : !payrollData || payrollData.items?.length === 0 ? (
+                <div className="text-center py-12 text-slate-400 text-xs">
+                  Tidak ada tagihan kredit berstatus payroll yayasan pada periode {getMonthName(payrollMonth)} {payrollYear}.
+                </div>
+              ) : (
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-slate-50/70 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                      <th className="py-3 px-4">No</th>
+                      <th className="py-3 px-4">No. Pengajuan</th>
+                      <th className="py-3 px-4">Nama Pegawai &amp; NIK</th>
+                      <th className="py-3 px-4">Unit Kerja</th>
+                      <th className="py-3 px-4">Rekening Muamalat</th>
+                      <th className="py-3 px-4">Angsuran Ke</th>
+                      <th className="py-3 px-4">Nominal Potongan</th>
+                      <th className="py-3 px-4">Jatuh Tempo</th>
+                      <th className="py-3 px-4 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {payrollData.items.map((item: any, idx: number) => (
+                      <tr key={item.installment_id} className="hover:bg-slate-50/70 transition">
+                        <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">{idx + 1}</td>
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900">{item.nomor_pengajuan}</td>
+                        <td className="py-3 px-4">
+                          <span className="font-bold text-slate-900 block">{item.nama}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">NIK: {item.nik}</span>
+                        </td>
+                        <td className="py-3 px-4 text-slate-700">{item.unit_kerja}</td>
+                        <td className="py-3 px-4 font-mono text-slate-800">{item.rekening_muamalat}</td>
+                        <td className="py-3 px-4 font-bold text-slate-900">
+                          Ke-{item.angsuran_ke} <span className="text-slate-400 font-normal">/ {item.total_tenor} Bln</span>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-emerald-800">
+                          {formatCurrency(item.nominal_angsuran)}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-slate-600">
+                          {formatDate(item.jatuh_tempo)}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {item.status === 'paid' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">
+                              <Check className="w-3 h-3 text-emerald-600" /> Lunas (Payroll)
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 font-bold text-[10px] border border-amber-200">
+                              <Clock className="w-3 h-3 text-amber-600" /> Siap Potong (Tgl 25)
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+        </div>
+      )}
 
       {/* ============================================================== */}
       {/* MODAL VERIFIKASI DOKUMEN & FORM PENILAIAN SPK SMART PETUGAS   */}

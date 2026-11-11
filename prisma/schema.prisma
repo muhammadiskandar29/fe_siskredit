@@ -72,6 +72,7 @@ model LoanApplication {
   status_pegawai     String
   masa_kerja_tahun   Int
   riwayat_pinjaman   String
+  metode_pembayaran  String            @default("potong_gaji") // 'potong_gaji' atau 'transfer_manual'
   status             String            @default("pending") // pending, verified, rejected, approved, disbursed, completed
   verification_token String?           @unique
   catat_verifikasi   String?
@@ -140,6 +141,8 @@ model LoanInstallment {
   angsuran_ke         Int
   jatuh_tempo         DateTime
   nominal_angsuran    Float
+  kode_unik           Int?            @default(0)
+  metode_bayar        String?         @default("potong_gaji") // potong_gaji, qris, transfer_manual
   status              String          @default("unpaid") // unpaid, pending_verification, paid
   bukti_transfer      String?
   paid_at             DateTime?

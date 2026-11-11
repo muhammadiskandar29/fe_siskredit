@@ -15,7 +15,7 @@ export async function POST(
     const { id } = await params;
     const loanId = parseInt(id);
     const body = await req.json();
-    const { decision, approved_nominal, approved_tenor, approval_notes } = body;
+    const { decision, approved_nominal, approved_tenor, approval_notes, metode_pembayaran } = body;
 
     const loan = await prisma.loanApplication.findUnique({
       where: { id: loanId },
@@ -34,6 +34,9 @@ export async function POST(
       where: { id: loanId },
       data: {
         status: isApproved ? 'approved' : 'rejected',
+        metode_pembayaran: isApproved ? (metode_pembayaran || 'potong_gaji') : loan.metode_pembayaran,
+        nominal_pengajuan: (isApproved && approved_nominal) ? parseFloat(approved_nominal) : loan.nominal_pengajuan,
+        tenor_bulan: (isApproved && approved_tenor) ? parseInt(approved_tenor) : loan.tenor_bulan,
         catat_approval: approval_notes || (isApproved ? 'Disetujui Ketua Koperasi' : 'Ditolak Ketua Koperasi'),
         verification_token: isApproved ? token : loan.verification_token,
         approved_at: isApproved ? now : null,

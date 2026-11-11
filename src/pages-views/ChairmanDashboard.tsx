@@ -34,6 +34,7 @@ export const ChairmanDashboard: React.FC = () => {
   const [decisionType, setDecisionType] = useState<'approved' | 'rejected'>('approved');
   const [approvedNominal, setApprovedNominal] = useState<number>(0);
   const [approvedTenor, setApprovedTenor] = useState<number>(12);
+  const [metodePembayaran, setMetodePembayaran] = useState<'potong_gaji' | 'transfer_manual'>('potong_gaji');
   const [notes, setNotes] = useState<string>('');
 
   // Disbursement Modal State (Pencairan Dana)
@@ -97,6 +98,11 @@ export const ChairmanDashboard: React.FC = () => {
     setDecisionType(type);
     setApprovedNominal(loan.nominal_pengajuan);
     setApprovedTenor(loan.tenor_bulan);
+    // Smart default: outsourcing defaults to manual payment, permanent/contract to payroll deduction
+    const isOutsourcing = loan.status_pegawai?.toLowerCase().includes('outsourcing') || 
+                          loan.user?.status_pegawai?.toLowerCase().includes('outsourcing');
+    const defaultMethod = (loan.metode_pembayaran as any) || (isOutsourcing ? 'transfer_manual' : 'potong_gaji');
+    setMetodePembayaran(defaultMethod);
     setNotes(type === 'approved' ? 'Permohonan pinjaman disetujui resmi oleh Ketua Koperasi Al-Azhar BSD.' : '');
   };
 
@@ -110,6 +116,7 @@ export const ChairmanDashboard: React.FC = () => {
         decision: decisionType,
         approved_nominal: approvedNominal,
         approved_tenor: approvedTenor,
+        metode_pembayaran: metodePembayaran,
         approval_notes: notes,
       });
 
@@ -370,6 +377,15 @@ export const ChairmanDashboard: React.FC = () => {
                           {loan.application_number}
                         </span>
                         <StatusBadge status={loan.status} />
+                        {loan.metode_pembayaran === 'transfer_manual' ? (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                            Mandiri (QRIS/Transfer)
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            Potong Gaji (Payroll)
+                          </span>
+                        )}
                       </div>
 
                       <h4 className="font-bold text-base text-slate-900">
@@ -550,6 +566,61 @@ export const ChairmanDashboard: React.FC = () => {
                       <option value={18}>18 Bulan</option>
                       <option value={24}>24 Bulan (2 Tahun)</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1.5">
+                      Skema Pelunasan &amp; Pembayaran Angsuran
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div 
+                        onClick={() => setMetodePembayaran('potong_gaji')}
+                        className={`cursor-pointer p-3 rounded-xl border-2 transition ${
+                          metodePembayaran === 'potong_gaji' 
+                            ? 'border-emerald-600 bg-emerald-50/50 text-emerald-950 shadow-xs' 
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-xs flex items-center gap-1.5">
+                            <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${
+                              metodePembayaran === 'potong_gaji' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'
+                            }`}>
+                              {metodePembayaran === 'potong_gaji' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
+                            </span>
+                            Potong Gaji Otomatis
+                          </span>
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Payroll Yayasan</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-snug pl-5">
+                          Untuk Guru &amp; Pegawai Tetap/Kontrak. Otomatis dipotong tgl 25 via rekap keuangan yayasan.
+                        </p>
+                      </div>
+
+                      <div 
+                        onClick={() => setMetodePembayaran('transfer_manual')}
+                        className={`cursor-pointer p-3 rounded-xl border-2 transition ${
+                          metodePembayaran === 'transfer_manual' 
+                            ? 'border-emerald-600 bg-emerald-50/50 text-emerald-950 shadow-xs' 
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-xs flex items-center gap-1.5">
+                            <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${
+                              metodePembayaran === 'transfer_manual' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'
+                            }`}>
+                              {metodePembayaran === 'transfer_manual' && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
+                            </span>
+                            Pembayaran Mandiri
+                          </span>
+                          <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">QRIS Dinamis</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-snug pl-5">
+                          Untuk Tenaga Outsourcing/Mitra. Bayar via Scan QRIS Dinamis (+ 3 digit kode unik) atau transfer.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </>
               ) : (

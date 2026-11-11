@@ -45,6 +45,12 @@ export async function POST(
     for (let i = 1; i <= tenor; i++) {
       const dueDate = new Date(now);
       dueDate.setMonth(dueDate.getMonth() + i);
+      // Set to 25th of month (standard cut-off penggajian Al-Azhar)
+      dueDate.setDate(25);
+
+      const kodeUnik = loan.metode_pembayaran === 'transfer_manual'
+        ? ((loanId * 17 + i * 7) % 899 + 101)
+        : 0;
 
       await prisma.loanInstallment.create({
         data: {
@@ -52,6 +58,8 @@ export async function POST(
           angsuran_ke: i,
           jatuh_tempo: dueDate,
           nominal_angsuran: monthlyAmount,
+          kode_unik: kodeUnik,
+          metode_bayar: loan.metode_pembayaran || 'potong_gaji',
           status: 'unpaid',
         },
       });

@@ -115,6 +115,7 @@ export interface LoanApplication {
   masa_kerja_tahun: number;
   riwayat_pinjaman: string;
   status: 'draft' | 'pending' | 'verified' | 'revision_required' | 'smart_calculated' | 'forwarded_to_chairman' | 'approved' | 'rejected' | 'disbursed';
+  metode_pembayaran?: 'potong_gaji' | 'transfer_manual' | string;
   verification_notes?: string;
   verified_at?: string;
   verified_by?: number;
